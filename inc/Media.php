@@ -56,62 +56,90 @@ class Media {
 		list( $this->type, $this->subtype ) = explode( '/', $mime );
 	}
 
-	final public function set_url( string $url ) : void {
+	final public function set_url( string $url ) : self {
 		$this->url = esc_url_raw( $url );
+
+		return $this;
 	}
 
-	final public function set_title( string $title ) : void {
+	final public function set_title( string $title ) : self {
 		$this->title = $title;
+
+		return $this;
 	}
 
-	final public function set_filename( string $filename ) : void {
+	final public function set_filename( string $filename ) : self {
 		$this->filename = $filename;
+
+		return $this;
 	}
 
-	final public function set_link( string $link ) : void {
+	final public function set_link( string $link ) : self {
 		$this->link = esc_url_raw( $link );
+
+		return $this;
 	}
 
-	final public function set_alt( string $alt ) : void {
+	final public function set_alt( string $alt ) : self {
 		$this->alt = $alt;
+
+		return $this;
 	}
 
-	final public function set_description( string $description ) : void {
+	final public function set_description( string $description ) : self {
 		$this->description = $description;
+
+		return $this;
 	}
 
-	final public function set_caption( string $caption ) : void {
+	final public function set_caption( string $caption ) : self {
 		$this->caption = $caption;
+
+		return $this;
 	}
 
-	final public function set_name( string $name ) : void {
+	final public function set_name( string $name ) : self {
 		$this->name = $name;
+
+		return $this;
 	}
 
-	final public function set_date( int $date ) : void {
+	final public function set_date( int $date ) : self {
 		$this->date = $date;
 		$this->dateFormatted = gmdate( __( 'F j, Y', 'asset-manager-framework' ), $date );
+
+		return $this;
 	}
 
-	final public function set_modified( int $modified ) : void {
+	final public function set_modified( int $modified ) : self {
 		$this->modified = $modified;
+
+		return $this;
 	}
 
-	final public function set_file_size( int $file_size ) : void {
+	final public function set_file_size( int $file_size ) : self {
 		$this->filesizeInBytes = $file_size;
 		$this->filesizeHumanReadable = size_format( $file_size );
+
+		return $this;
 	}
 
-	final public function set_width( int $width ) : void {
+	final public function set_width( int $width ) : self {
 		$this->width = $width;
+
+		return $this;
 	}
 
-	final public function set_height( int $height ) : void {
+	final public function set_height( int $height ) : self {
 		$this->height = $height;
+
+		return $this;
 	}
 
-	final public function set_sizes( array $sizes ) : void {
+	final public function set_sizes( array $sizes ) : self {
 		$this->sizes = $sizes;
+
+		return $this;
 	}
 
 }

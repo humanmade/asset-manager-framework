@@ -15,29 +15,37 @@ abstract class Playable extends Media {
 	public $fileLengthHumanReadable = '';
 	public $meta = [];
 
-	final public function set_length( string $duration ) : void {
+	final public function set_length( string $duration ) : self {
 		$this->fileLength = $duration;
 		$this->fileLengthHumanReadable = human_readable_duration( $duration );
+
+		return $this;
 	}
 
-	final public function set_meta( array $meta ) : void {
+	final public function set_meta( array $meta ) : self {
 		$this->meta = $meta;
+
+		return $this;
 	}
 
-	final public function set_image( string $image ) : void {
+	final public function set_image( string $image ) : self {
 		$this->image = [
 			'src' => $image,
 			'width' => 400,
 			'height' => 400,
 		];
+
+		return $this;
 	}
 
-	final public function set_thumb( string $thumb ) : void {
+	final public function set_thumb( string $thumb ) : self {
 		$this->thumb = [
 			'src' => $thumb,
 			'width' => 400,
 			'height' => 400,
 		];
+
+		return $this;
 	}
 
 }
