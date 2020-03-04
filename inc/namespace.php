@@ -102,7 +102,7 @@ function ajax_select() : void {
 	}
 
 	$metadata = [
-		'file' => $selection['filename'],
+		'file' => wp_slash( $selection['filename'] ),
 	];
 
 	if ( ! empty( $selection['width'] ) ) {
@@ -113,7 +113,7 @@ function ajax_select() : void {
 		$metadata['height'] = intval( $selection['height'] );
 	}
 
-	wp_update_attachment_metadata( $attachment_id, wp_slash( $metadata ) );
+	wp_update_attachment_metadata( $attachment_id, $metadata );
 
 	wp_send_json_success( get_post( $attachment_id ) );
 }
