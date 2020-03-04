@@ -30,6 +30,24 @@ declare( strict_types=1 );
 
 namespace AssetManagerFramework;
 
+use Exception;
+use WP_Post;
+use WP_Query;
+
+add_action( 'plugins_loaded', function() : void {
+	require_once 'inc/Provider.php';
+	require_once 'inc/BlankProvider.php';
+	require_once 'inc/Media.php';
+	require_once 'inc/Playable.php';
+	require_once 'inc/Image.php';
+	require_once 'inc/Audio.php';
+	require_once 'inc/Video.php';
+	require_once 'inc/Document.php';
+	require_once 'inc/MediaList.php';
+
+	do_action( 'amf/loaded' );
+} );
+
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\enqueue_scripts' );
 add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\enqueue_scripts' );
 
@@ -52,5 +70,62 @@ function enqueue_scripts() : void {
 		$asset_file['version'],
 		false
 	);
+}
+
+// Handle the 'select' event in the media manager.
+add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
+
+function ajax_select() : void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$selection = isset( $_REQUEST['selection'] ) ? wp_unslash( (array) $_REQUEST['selection'] ) : [];
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$post_id = intval( $_REQUEST['post'] ?? 0 );
+
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_send_json_error();
+	}
+
+	$attachment = get_attachment_by_id( $selection['id'] );
+
+	if ( $attachment ) {
+		wp_send_json_success( $attachment );
+	}
+
+	$args = [
+		'post_title' => $selection['title'],
+		'post_parent' => $post_id,
+		'post_name' => $selection['id'],
+		'post_content' => $selection['description'],
+		'post_excerpt' => $selection['caption'],
+		'post_mime_type' => $selection['mime'],
+		'guid' => $selection['url'],
+	];
+
+	$attachment_id = wp_insert_attachment( $args, false, 0, true );
+
+	if ( is_wp_error( $attachment_id ) ) {
+		wp_send_json_error( $attachment_id );
+	}
+
+	if ( ! empty( $selection['alt'] ) ) {
+		add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
+	}
+
+	$metadata = [
+		'file' => $selection['filename'],
+	];
+
+	if ( ! empty( $selection['width'] ) ) {
+		$metadata['width'] = intval( $selection['width'] );
+	}
+
+	if ( ! empty( $selection['height'] ) ) {
+		$metadata['height'] = intval( $selection['height'] );
+	}
+
+	wp_update_attachment_metadata( $attachment_id, wp_slash( $metadata ) );
+
+	wp_send_json_success( get_post( $attachment_id ) );
 }
 
