@@ -26,8 +26,10 @@
  * GNU General Public License for more details.
  */
 
+declare( strict_types=1 );
+
 namespace AssetManagerFramework;
 
-include __DIR__ . '/inc/namespace.php';
+require_once __DIR__ . '/inc/namespace.php';
 
 bootstrap();
