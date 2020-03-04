@@ -133,6 +133,11 @@ function ajax_select() : void {
 	wp_send_json_success( get_post( $attachment_id ) );
 }
 
+add_filter( 'get_attached_file', function( $file, int $attachment_id ) : string {
+	$metadata = wp_get_attachment_metadata( $attachment_id );
+
+	return $metadata['file'] ?? '';
+}, 10, 2 );
 
 function get_attachment_by_id( string $id ) :? WP_Post {
 	$query = new WP_Query(
