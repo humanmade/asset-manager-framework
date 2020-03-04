@@ -2,7 +2,7 @@
 
 This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider, such as a DAM.
 
-This framework handles all the necessary integration with WordPress (Ajax endpoints, REST API endpoints, and Backbone components), leaving you to only focus on implementing a connection to your DAM.
+It handles the necessary integration with WordPress (Ajax endpoints, REST API endpoints, and Backbone components), leaving you to only focus on the connection to your DAM.
 
 The intention is that the media manager, the block editor, the classic editor, media endpoints of the REST API, and anything that calls `wp.media()` should "just work" and not need to implement any changes in order to support a media library that is powered by an external provider.
 
@@ -10,7 +10,7 @@ The intention is that the media manager, the block editor, the classic editor, m
 
 Current status: **Proof of concept.** This is far from ready for production use.
 
-The following user-facing features work as expected:
+The following features work as expected:
 
 * [X] Image block (including its derivatives such as Cover and Media & Text)
 * [X] Video block
@@ -23,7 +23,13 @@ The following user-facing features work as expected:
 * [X] Media screen grid attachment details
 * [X] Attachment editing screen
 
-The following user-facing features are not yet supported:
+The following features *should* work but have yet to be completely tested:
+
+* [ ] Mostly any code that calls `wp.media()` to open the media manager and work with the resulting selected attachment (for example, libraries such as CMB2, ACF, and Fieldmanager)
+* [ ] Default REST API `/media` endpoints
+* [ ] Default XML-RPC requests for media
+
+The following features are not yet supported:
 
 * [ ] Gallery block
 * [ ] Images in the classic editor
@@ -37,7 +43,13 @@ The following user-facing features are not yet supported:
 
 The following new features are planned but not yet implemented:
 
-* [ ] Read-only mode (to prevent local uploading, editing, cropping, or deletion)
+* [ ] Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)
+
+The following features will *not* be supported:
+
+* Side-loading media from an external media provider. The intention of this framework is that media files remain remotely hosted.
+* Built-in handling of authentication that may be required to communicate with your external media provider. This responsibility lies within your implementation.
+* Built-in support for any given media provider (such as Resource Space, AEM, or Bynder). This is a framework built to be extended in order to connect it to a media provider.
 
 ## Implementation
 
