@@ -72,6 +72,10 @@ function enqueue_scripts() : void {
 	);
 }
 
+// Replace the default wp_ajax_query_attachments handler with our own.
+remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
+add_action( 'wp_ajax_query-attachments', __NAMESPACE__ . '\\ajax_query_attachments', 1 );
+
 // Handle the 'select' event in the media manager.
 add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
 
@@ -129,3 +133,64 @@ function ajax_select() : void {
 	wp_send_json_success( get_post( $attachment_id ) );
 }
 
+
+function get_attachment_by_id( string $id ) :? WP_Post {
+	$query = new WP_Query(
+		[
+			'post_type' => 'attachment',
+			'name' => $id,
+			'posts_per_page' => 1,
+			'no_found_rows' => true,
+		]
+	);
+
+	if ( ! $query->have_posts() ) {
+		return null;
+	}
+
+	return $query->next_post();
+}
+
+function get_provider() : Provider {
+	static $provider = null;
+
+	if ( $provider ) {
+		return $provider;
+	}
+
+	$provider_class = apply_filters( 'amf/provider_class', __NAMESPACE__ . '\BlankProvider' );
+	$provider = new $provider_class();
+
+	return $provider;
+}
+
+function ajax_query_attachments() : void {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$args = isset( $_REQUEST['query'] ) ? wp_unslash( (array) $_REQUEST['query'] ) : [];
+
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$post_id = intval( $_REQUEST['post_id'] ?? 0 );
+
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_send_json_error();
+	}
+
+	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_send_json_error();
+	}
+
+	try {
+		$items = get_provider()->request_items( $args );
+	} catch ( Exception $e ) {
+		wp_send_json_error(
+			[
+				[
+					'code' => $e->getCode(),
+					'message' => $e->getMessage(),
+				],
+			]
+		);
+	}
+
+	wp_send_json_success( $items->toArray() );
+}
