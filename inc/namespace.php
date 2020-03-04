@@ -13,33 +13,46 @@ use Exception;
 use WP_Post;
 use WP_Query;
 
-add_action( 'plugins_loaded', function() : void {
-	require_once 'inc/Provider.php';
-	require_once 'inc/BlankProvider.php';
-	require_once 'inc/Media.php';
-	require_once 'inc/Playable.php';
-	require_once 'inc/Image.php';
-	require_once 'inc/Audio.php';
-	require_once 'inc/Video.php';
-	require_once 'inc/Document.php';
-	require_once 'inc/MediaList.php';
+function bootstrap() : void {
+	add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
+	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+
+	// Replace the default wp_ajax_query_attachments handler with our own.
+	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
+	add_action( 'wp_ajax_query-attachments', __NAMESPACE__ . '\\ajax_query_attachments', 1 );
+
+	// Handle the 'select' event Ajax call in the media manager.
+	add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
+
+	// Specify the attached file for our placeholder attachment objects.
+	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+}
+
+function init() : void {
+	require_once __DIR__ . '/Provider.php';
+	require_once __DIR__ . '/BlankProvider.php';
+	require_once __DIR__ . '/Media.php';
+	require_once __DIR__ . '/Playable.php';
+	require_once __DIR__ . '/Image.php';
+	require_once __DIR__ . '/Audio.php';
+	require_once __DIR__ . '/Video.php';
+	require_once __DIR__ . '/Document.php';
+	require_once __DIR__ . '/MediaList.php';
 
 	do_action( 'amf/loaded' );
-} );
-
-add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\enqueue_scripts' );
-add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\enqueue_scripts' );
+}
 
 function enqueue_scripts() : void {
 	if ( ! wp_script_is( 'media-views', 'enqueued' ) ) {
 		return;
 	}
 
-	$asset_file = require plugin_dir_path( __FILE__ ) . 'build/index.asset.php';
+	$asset_file = require plugin_dir_path( __DIR__ ) . 'build/index.asset.php';
 
 	wp_enqueue_script(
 		'asset-manager-framework',
-		plugin_dir_url( __FILE__ ) . 'build/index.js',
+		plugin_dir_url( __DIR__ ) . 'build/index.js',
 		array_merge(
 			[
 				'media-views',
@@ -50,13 +63,6 @@ function enqueue_scripts() : void {
 		false
 	);
 }
-
-// Replace the default wp_ajax_query_attachments handler with our own.
-remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
-add_action( 'wp_ajax_query-attachments', __NAMESPACE__ . '\\ajax_query_attachments', 1 );
-
-// Handle the 'select' event in the media manager.
-add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
 
 function ajax_select() : void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -112,11 +118,11 @@ function ajax_select() : void {
 	wp_send_json_success( get_post( $attachment_id ) );
 }
 
-add_filter( 'get_attached_file', function( $file, int $attachment_id ) : string {
+function replace_attached_file( $file, int $attachment_id ) : string {
 	$metadata = wp_get_attachment_metadata( $attachment_id );
 
 	return $metadata['file'] ?? '';
-}, 10, 2 );
+}
 
 function get_attachment_by_id( string $id ) :? WP_Post {
 	$query = new WP_Query(
