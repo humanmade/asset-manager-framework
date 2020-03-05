@@ -13,8 +13,9 @@ namespace AssetManagerFramework;
 
 class Media {
 
-	public $attachmentExists = false;
 	public $alt = '';
+	public $amfMeta = [];
+	public $attachmentExists = false;
 	public $author = 0;
 	public $caption = '';
 	public $date = null;
@@ -138,6 +139,18 @@ class Media {
 
 	final public function set_sizes( array $sizes ) : self {
 		$this->sizes = $sizes;
+
+		return $this;
+	}
+
+	final public function add_amf_meta( string $key, $value ) : self {
+		$this->amfMeta[ $key ] = $value;
+
+		return $this;
+	}
+
+	final public function set_amf_meta( array $meta ) : self {
+		$this->amfMeta = $meta;
 
 		return $this;
 	}

@@ -115,7 +115,14 @@ function ajax_select() : void {
 
 	wp_update_attachment_metadata( $attachment_id, $metadata );
 
-	wp_send_json_success( get_post( $attachment_id ) );
+	$attachment = get_post( $attachment_id );
+	$meta = $selection['amfMeta'] ?? [];
+
+	unset( $selection['amfMeta'] );
+
+	do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
+
+	wp_send_json_success( $attachment );
 }
 
 function replace_attached_file( $file, int $attachment_id ) : string {
