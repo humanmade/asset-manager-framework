@@ -40,6 +40,11 @@ The following features are not yet supported:
 * [ ] Deep linking to the media screen grid attachment details
 * [ ] Setting the featured image for a non-image media item automatically, when one is available (eg. video poster)
 * [ ] Responsive image srcsets on images within post content
+* [ ] `wp.media()` calls with `multiple: true`
+
+The following known bugs exist and will be addressed shortly:
+
+* [ ] Attempting to insert a subsequent media item after the first can trigger a JavaScript error relating to the media manager state.
 
 The following new features are planned but not yet implemented:
 
@@ -58,24 +63,22 @@ There are two main parts to the way this plugin works.
 1. Allowing the media manager grid to display external items which are not existing attachments.
 2. Subsequently creating a local attachment for an external item when it's selected for use.
 
-The design decision behind this is that allowing for external items to be browsed in the media manager is quite straight forward, but unless each item is associated with a local attachment then most of the rest of WordPress breaks. Previous attempts to do this have involved lying about attachment IDs, or switching to another site on a Multisite network to provide a media item. Neither approach is desirable because such lies need to be maintained and eventually you run into a situation where your lie comes unravelled.
+The design decision behind this is that allowing for external items to be browsed in the media manager is quite straight forward, but unless each item is associated with a local attachment then most of the rest of WordPress breaks when you go to use an item. Previous attempts to do this have involved lying about attachment IDs, or switching to another site on a Multisite network to provide a media item. Neither approach is desirable because such lies need to be maintained and eventually you run into a situation where your lies become unravelled.
 
 Asset Manager Framework instead allows external media items to be browsed in the media library grid, but as soon as an item is selected for use (eg. to be inserted into a post or used as a featured image), an attachment is created for the media item, and this gets returned by the media manager.
 
-Importantly, the actual media item does not get sideloaded into WordPress - it remains as an external item at its external URL. The attachment object refers to the correct external URL as necessary, while maintaining a local attachment that can be referenced, queried, etc.
+The actual media file does not get sideloaded into WordPress - it intentionally remains at its external URL. The attachment object refers to the correct external URL as necessary, while maintaining a local attachment that can be referenced, queried, etc.
 
 ## Integration
 
-There are two steps to integrating a media provider using the Asset Manager Framework:
+There are two steps needed to integrate a media provider using the Asset Manager Framework:
 
-1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `request()` method to perform a request to your external media provider to fetch results based on query arguments from the media manager.
+1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `request()` method to fetch results from your external media provider based on query arguments from the media manager.
 2. Hook into the `amf/provider_class` filter to register your provider for use.
 
 Full documentation is coming soon, but for now here's an example of a provider which supplies images from placekitten.com:
 
 ```php
-<?php
-
 use AssetManagerFramework\{
 	Provider,
 	MediaList,
@@ -117,4 +120,4 @@ add_filter( 'amf/provider_class', function() {
 
 Try it and your media library will be much improved:
 
-![Admin Toolbar Menu](assets/KittenProvider.png)
+![Kittens](assets/KittenProvider.png)
