@@ -6,13 +6,16 @@ const AMFToolbarSelect = Select.extend( {
 
 		if ( this.options.items && this.options.items.select ) {
 			const click_handler = this.options.items.select.click;
+			const attribute = ( this.options.items.select.requires.library ? 'library' : 'selection' );
 
 			this.options.items.select.click = () => {
-				const selection_state = this.controller.state().get('selection');
-				const selection = selection_state.first().toJSON();
-				const cid = selection_state.single().cid;
+				const selection_state = this.controller.state().get( attribute );
+				const selection = selection_state.toJSON();
+				const new_attachments = selection_state.models.filter(model => ! model.attributes.attachmentExists);
 
-				if ( selection.attachmentExists ) {
+				click_handler = _.bind( click_handler, this );
+
+				if ( ! new_attachments.length ) {
 					click_handler();
 					return;
 				}
@@ -26,9 +29,9 @@ const AMFToolbarSelect = Select.extend( {
 				);
 
 				request.done((response)=>{
-					let model = wp.media.model.Attachments.all._byId[ cid ];
-
-					model.set( 'id', response.ID );
+					Object.keys(response).forEach( key => {
+						selection_state.get( key ).set( 'id', response[ key ].ID );
+					});
 
 					click_handler();
 				});

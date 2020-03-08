@@ -66,7 +66,7 @@ function enqueue_scripts() : void {
 
 function ajax_select() : void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$selection = isset( $_REQUEST['selection'] ) ? wp_unslash( (array) $_REQUEST['selection'] ) : [];
+	$selected = isset( $_REQUEST['selection'] ) ? wp_unslash( (array) $_REQUEST['selection'] ) : [];
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$post_id = intval( $_REQUEST['post'] ?? 0 );
@@ -75,10 +75,15 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
+	$attachments = [];
+	$errors = [];
+
+	foreach ( $selected as $selection ) {
 	$attachment = get_attachment_by_id( $selection['id'] );
 
 	if ( $attachment ) {
-		wp_send_json_success( $attachment );
+		$attachments[] = $attachment;
+		continue;
 	}
 
 	$args = [
@@ -94,7 +99,8 @@ function ajax_select() : void {
 	$attachment_id = wp_insert_attachment( $args, false, 0, true );
 
 	if ( is_wp_error( $attachment_id ) ) {
-		wp_send_json_error( $attachment_id );
+		$errors[ $selection['id'] ] = $attachment_id;
+		continue;
 	}
 
 	if ( ! empty( $selection['alt'] ) ) {
@@ -122,7 +128,14 @@ function ajax_select() : void {
 
 	do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
 
-	wp_send_json_success( $attachment );
+	$attachments[ $selection['id'] ] = $attachment;
+	}
+
+	if ( ! empty( $errors ) ) {
+		wp_send_json_error( $errors );
+	}
+
+	wp_send_json_success( $attachments );
 }
 
 function replace_attached_file( $file, int $attachment_id ) : string {
