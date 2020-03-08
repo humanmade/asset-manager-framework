@@ -8,7 +8,7 @@
  *
  * Plugin Name:  Asset Manager Framework
  * Description:  A framework for overriding the WordPress media library with an external asset provider.
- * Version:      0.3.0
+ * Version:      0.4.0
  * Plugin URI:   https://github.com/humanmade/asset-manager-framework
  * Author:       Human Made
  * Author URI:   https://humanmade.com/
