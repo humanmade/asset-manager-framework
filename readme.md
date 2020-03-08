@@ -13,6 +13,7 @@ Current status: **Proof of concept.** This is far from ready for production use.
 The following features work as expected:
 
 * [X] Image block (including its derivatives such as Cover and Media & Text)
+* [X] Gallery block
 * [X] Video block
 * [X] Audio block
 * [X] File block
@@ -31,7 +32,6 @@ The following features *should* work but have yet to be completely tested:
 
 The following features are not yet supported:
 
-* [ ] Gallery block
 * [ ] Images in the classic editor
 * [ ] Videos in the classic editor
 * [ ] Audio in the classic editor
@@ -40,11 +40,6 @@ The following features are not yet supported:
 * [ ] Deep linking to the media screen grid attachment details
 * [ ] Setting the featured image for a non-image media item automatically, when one is available (eg. video poster)
 * [ ] Responsive image srcsets on images within post content
-* [ ] `wp.media()` calls with `multiple: true`
-
-The following known bugs exist and will be addressed shortly:
-
-* [ ] Attempting to insert a subsequent media item after the first can trigger a JavaScript error relating to the media manager state.
 
 The following new features are planned but not yet implemented:
 
