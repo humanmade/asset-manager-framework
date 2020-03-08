@@ -82,7 +82,7 @@ function ajax_select() : void {
 	$attachment = get_attachment_by_id( $selection['id'] );
 
 	if ( $attachment ) {
-		$attachments[] = $attachment;
+		$attachments[ $selection['id'] ] = $attachment->ID;
 		continue;
 	}
 
@@ -128,7 +128,7 @@ function ajax_select() : void {
 
 	do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
 
-	$attachments[ $selection['id'] ] = $attachment;
+	$attachments[ $selection['id'] ] = $attachment->ID;
 	}
 
 	if ( ! empty( $errors ) ) {
