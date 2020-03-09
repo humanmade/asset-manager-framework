@@ -1,6 +1,6 @@
 {
   "name": "asset-manager-framework",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A framework for overriding the WordPress media library with an external asset provider.",
   "author": "Human Made",
   "license": "GPL-2.0-or-later",
