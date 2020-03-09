@@ -15,7 +15,7 @@ function get_click_handler( item ) {
 			return;
 		}
 
-		jQuery( event.target ).prop('disabled',true);
+		event.target.disabled = true;
 
 		let request = wp.ajax.post(
 			'amf-select',
@@ -30,14 +30,14 @@ function get_click_handler( item ) {
 				selection_state.get( key ).set( 'id', response[ key ] );
 			});
 
-			jQuery( event.target ).prop('disabled',false);
+			event.target.disabled = false;
 
 			click_handler();
 		} ).fail( response => {
 			console.log('=== failed ===');
 			console.log(response);
 
-			jQuery( event.target ).prop('disabled',false);
+			event.target.disabled = false;
 
 			// @TODO call click_handler
 		} );
