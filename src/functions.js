@@ -4,7 +4,7 @@ function get_click_handler( item ) {
 	let click_handler = item.click;
 	const attribute = ( item.requires.library ? 'library' : 'selection' );
 
-	return function() {
+	return function( event ) {
 		const selection_state = this.controller.state().get( attribute );
 		const new_attachments = selection_state.models.filter(model => ! model.attributes.attachmentExists);
 
@@ -14,6 +14,8 @@ function get_click_handler( item ) {
 			click_handler();
 			return;
 		}
+
+		jQuery( event.target ).prop('disabled',true);
 
 		let request = wp.ajax.post(
 			'amf-select',
@@ -28,10 +30,15 @@ function get_click_handler( item ) {
 				selection_state.get( key ).set( 'id', response[ key ] );
 			});
 
+			jQuery( event.target ).prop('disabled',false);
+
 			click_handler();
 		} ).fail( response => {
 			console.log('=== failed ===');
 			console.log(response);
+
+			jQuery( event.target ).prop('disabled',false);
+
 			// @TODO call click_handler
 		} );
 
