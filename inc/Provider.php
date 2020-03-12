@@ -14,6 +14,28 @@ use WP_Query;
 
 abstract class Provider {
 
+	/**
+	 * Perform a request to a media provider and return results according to the arguments.
+	 *
+	 * Typically an implementation of this method will perform a remote request to a media provider service,
+	 * process the results, and return a Media collection.
+	 *
+	 * @param array $args {
+	 *      Arguments for the request for media items, typically coming directly from the media manager filters.
+	 *
+	 *      @type int      $paged          The page number of the results.
+	 *      @type int      $posts_per_page Optional. Maximum number of results to return.
+	 *      @type string   $s              Optional. The search query.
+	 *      @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
+	 *      @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
+	 *      @type string   $order          Optional. Order. 'DESC' (for 'date') or 'ASC' (for 'menu_order ID').
+	 *      @type int      $author         Optional. User ID of author to restrict results to.
+	 *      @type int      $year           Optional. Four digit year number if results are filtered by date.
+	 *      @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
+	 * }
+	 * @throws Exception Thrown if an unrecoverable error occurs.
+	 * @return MediaList The collection of Media items. Can be an empty collection if there are no matching results.
+	 */
 	abstract protected function request( array $args ) : MediaList;
 
 	public function supports_asset_create() : bool {
