@@ -58,6 +58,22 @@ abstract class Provider {
 			// note that post_parent can be 0
 		}
 
+		if ( isset( $args['posts_per_page'] ) ) {
+			$args['posts_per_page'] = intval( $args['posts_per_page'] );
+		}
+
+		if ( isset( $args['year'] ) ) {
+			$args['year'] = intval( $args['year'] );
+		}
+
+		if ( isset( $args['monthnum'] ) ) {
+			$args['monthnum'] = intval( $args['monthnum'] );
+		}
+
+		if ( isset( $args['author'] ) ) {
+			$args['author'] = intval( $args['author'] );
+		}
+
 		if ( isset( $args['post_mime_type'] ) ) {
 			// The post_mime_type arg takes various formats, so this normalises its value to make it easier
 			// for implementations to deal with.
