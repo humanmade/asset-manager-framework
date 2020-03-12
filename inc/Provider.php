@@ -50,6 +50,7 @@ abstract class Provider {
 
 	final public function request_items( array $args ) : MediaList {
 		if ( ! empty( $args['post_parent'] ) ) {
+			// @TODO
 			// special case, only return attachments that exist.
 			// run a WP_Query for attachments with post parent and
 			// set the attachment status on all of the items

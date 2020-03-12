@@ -12,7 +12,7 @@ Current status: **Proof of concept.** This is far from ready for production use.
 
 The following features work as expected:
 
-* [X] Image block (including its derivatives such as Cover and Media & Text)
+* [X] Image block (including its derivative blocks and controls such as Cover, Media & Text, Inline image)
 * [X] Gallery block
 * [X] Video block
 * [X] Audio block
