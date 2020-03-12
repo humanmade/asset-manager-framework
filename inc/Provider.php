@@ -72,6 +72,8 @@ abstract class Provider {
 			}
 		}
 
+		$args['paged'] = intval( $args['paged'] ?? 1 );
+
 		$items = $this->request( $args );
 		$array = $items->toArray();
 
