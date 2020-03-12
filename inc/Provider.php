@@ -73,7 +73,13 @@ abstract class Provider {
 		}
 
 		$items = $this->request( $args );
-		$names = array_column( $items->toArray(), 'id' );
+		$array = $items->toArray();
+
+		if ( ! $array ) {
+			return $items;
+		}
+
+		$names = array_column( $array, 'id' );
 		$query = [
 			'post_type' => 'attachment',
 			'post_status' => 'inherit',
