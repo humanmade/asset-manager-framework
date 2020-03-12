@@ -57,6 +57,21 @@ abstract class Provider {
 			// and return
 		}
 
+		if ( isset( $args['post_mime_type'] ) ) {
+			// The post_mime_type arg takes various formats, so this normalises its value to make it easier
+			// for implementations to deal with.
+
+			// The post_mime_type arg can be a string of comma separate types or subtypes, or an array of types or subtypes.
+			// Examples:
+			// - a string containing one primary type: image
+			// - an array containing primary types: [ image, video ]
+			// - a comma separated string of subtypes: application/msword,application/wordperfect,application/octet-stream
+
+			if ( ! is_array( $args['post_mime_type'] ) ) {
+				$args['post_mime_type'] = explode( ',', $args['post_mime_type'] );
+			}
+		}
+
 		$items = $this->request( $args );
 		$names = array_column( $items->toArray(), 'id' );
 		$query = [
