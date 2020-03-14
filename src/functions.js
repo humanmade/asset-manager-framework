@@ -12,7 +12,6 @@ function extend_toolbar( toolbar, selector ) {
 }
 
 function get_click_handler( item ) {
-
 	let click_handler = item.click;
 	const attribute = ( item.requires.library ? 'library' : 'selection' );
 
@@ -29,15 +28,13 @@ function get_click_handler( item ) {
 
 		event.target.disabled = true;
 
-		let request = wp.ajax.post(
+		wp.ajax.post(
 			'amf-select',
 			{
 				'selection' : selection_state.toJSON(),
 				'post' : wp.media.view.settings.post.id,
 			}
-		);
-
-		request.done( response => {
+		).done( response => {
 			Object.keys(response).forEach( key => {
 				selection_state.get( key ).set( 'id', response[ key ] );
 			});
@@ -53,7 +50,6 @@ function get_click_handler( item ) {
 
 			// @TODO call click_handler
 		} );
-
 	}
 }
 
