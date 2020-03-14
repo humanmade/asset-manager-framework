@@ -43,12 +43,9 @@ function get_click_handler( item ) {
 
 			click_handler();
 		} ).fail( response => {
-			console.log('=== failed ===');
-			console.log(response);
+			alert( response[0].message ?? __( 'An unknown error occurred.', 'asset-manager-framework' ) );
 
 			event.target.disabled = false;
-
-			// @TODO call click_handler
 		} );
 	}
 }

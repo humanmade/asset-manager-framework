@@ -76,7 +76,6 @@ function ajax_select() : void {
 	}
 
 	$attachments = [];
-	$errors = [];
 
 	foreach ( $selected as $selection ) {
 		$attachment = get_attachment_by_id( $selection['id'] );
@@ -99,8 +98,7 @@ function ajax_select() : void {
 		$attachment_id = wp_insert_attachment( $args, false, 0, true );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			$errors[ $selection['id'] ] = $attachment_id;
-			continue;
+			wp_send_json_error( $attachment_id );
 		}
 
 		if ( ! empty( $selection['alt'] ) ) {
@@ -129,10 +127,6 @@ function ajax_select() : void {
 		do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
 
 		$attachments[ $selection['id'] ] = $attachment->ID;
-	}
-
-	if ( ! empty( $errors ) ) {
-		wp_send_json_error( $errors );
 	}
 
 	wp_send_json_success( $attachments );
