@@ -79,56 +79,56 @@ function ajax_select() : void {
 	$errors = [];
 
 	foreach ( $selected as $selection ) {
-	$attachment = get_attachment_by_id( $selection['id'] );
+		$attachment = get_attachment_by_id( $selection['id'] );
 
-	if ( $attachment ) {
+		if ( $attachment ) {
+			$attachments[ $selection['id'] ] = $attachment->ID;
+			continue;
+		}
+
+		$args = [
+			'post_title' => $selection['title'],
+			'post_parent' => $post_id,
+			'post_name' => $selection['id'],
+			'post_content' => $selection['description'],
+			'post_excerpt' => $selection['caption'],
+			'post_mime_type' => $selection['mime'],
+			'guid' => $selection['url'],
+		];
+
+		$attachment_id = wp_insert_attachment( $args, false, 0, true );
+
+		if ( is_wp_error( $attachment_id ) ) {
+			$errors[ $selection['id'] ] = $attachment_id;
+			continue;
+		}
+
+		if ( ! empty( $selection['alt'] ) ) {
+			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
+		}
+
+		$metadata = [
+			'file' => wp_slash( $selection['filename'] ),
+		];
+
+		if ( ! empty( $selection['width'] ) ) {
+			$metadata['width'] = intval( $selection['width'] );
+		}
+
+		if ( ! empty( $selection['height'] ) ) {
+			$metadata['height'] = intval( $selection['height'] );
+		}
+
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+
+		$attachment = get_post( $attachment_id );
+		$meta = $selection['amfMeta'] ?? [];
+
+		unset( $selection['amfMeta'] );
+
+		do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
+
 		$attachments[ $selection['id'] ] = $attachment->ID;
-		continue;
-	}
-
-	$args = [
-		'post_title' => $selection['title'],
-		'post_parent' => $post_id,
-		'post_name' => $selection['id'],
-		'post_content' => $selection['description'],
-		'post_excerpt' => $selection['caption'],
-		'post_mime_type' => $selection['mime'],
-		'guid' => $selection['url'],
-	];
-
-	$attachment_id = wp_insert_attachment( $args, false, 0, true );
-
-	if ( is_wp_error( $attachment_id ) ) {
-		$errors[ $selection['id'] ] = $attachment_id;
-		continue;
-	}
-
-	if ( ! empty( $selection['alt'] ) ) {
-		add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
-	}
-
-	$metadata = [
-		'file' => wp_slash( $selection['filename'] ),
-	];
-
-	if ( ! empty( $selection['width'] ) ) {
-		$metadata['width'] = intval( $selection['width'] );
-	}
-
-	if ( ! empty( $selection['height'] ) ) {
-		$metadata['height'] = intval( $selection['height'] );
-	}
-
-	wp_update_attachment_metadata( $attachment_id, $metadata );
-
-	$attachment = get_post( $attachment_id );
-	$meta = $selection['amfMeta'] ?? [];
-
-	unset( $selection['amfMeta'] );
-
-	do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
-
-	$attachments[ $selection['id'] ] = $attachment->ID;
 	}
 
 	if ( ! empty( $errors ) ) {
