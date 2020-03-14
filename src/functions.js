@@ -1,4 +1,16 @@
 
+function extend_toolbar( toolbar, selector ) {
+	return toolbar.extend( {
+		set: function( id, view, options ) {
+			if ( selector === id ) {
+				view.click = get_click_handler( view );
+			}
+
+			return toolbar.prototype.set.apply( this, [ id, view, options ] );
+		}
+	} );
+}
+
 function get_click_handler( item ) {
 
 	let click_handler = item.click;
@@ -45,4 +57,7 @@ function get_click_handler( item ) {
 	}
 }
 
-export { get_click_handler }
+export {
+	get_click_handler,
+	extend_toolbar,
+}
