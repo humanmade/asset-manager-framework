@@ -8,7 +8,7 @@ The intention is that the media manager, the block editor, the classic editor, m
 
 ## Status
 
-Current status: **Proof of concept.** This is far from ready for production use.
+Current status: **MVP.** This is not yet ready for production use.
 
 The following features work as expected:
 
