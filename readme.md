@@ -28,9 +28,15 @@ The following features work as expected:
 * [X] Media screen: Grid attachment details
 * [X] Attachment editing screen
 
+The following plugins have been tested and are known to be compatible:
+
+* [X] CMB2
+* [X] Advanced Custom Fields (ACF)
+* [X] Fieldmanager
+
 The following features *should* work but have yet to be completely tested:
 
-* [ ] Mostly any code that calls `wp.media()` to open the media manager and work with the resulting selected attachment (for example, libraries such as CMB2, ACF, and Fieldmanager)
+* [ ] Mostly any code that calls `wp.media()` to open the media manager and work with the resulting selected attachment
 * [ ] Default REST API `/media` endpoints
 * [ ] Default XML-RPC requests for media
 
