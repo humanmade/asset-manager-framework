@@ -3,13 +3,12 @@ import { get_click_handler } from '../functions';
 const { Toolbar } = wp.media.view;
 
 const AMFToolbar = Toolbar.extend( {
-	initialize: function () {
-		Toolbar.prototype.initialize.apply( this, arguments );
-
-		if ( this.options.items && this.options.items.insert ) {
-			let handler = get_click_handler( this.options.items.insert );
-			this.options.items.insert.click = handler;
+	set: function( id, view, options ) {
+		if ( 'insert' === id ) {
+			view.click = get_click_handler( view );
 		}
+
+		return Toolbar.prototype.set.apply( this, [ id, view, options ] );
 	}
 } );
 
