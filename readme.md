@@ -12,16 +12,20 @@ Current status: **Proof of concept.** This is far from ready for production use.
 
 The following features work as expected:
 
-* [X] Image block (including its derivative blocks and controls such as Cover, Media & Text, Inline image)
-* [X] Gallery block
-* [X] Video block
-* [X] Audio block
-* [X] File block
-* [X] Featured image
-* [X] Featured image in the classic editor
-* [X] Media screen list mode
-* [X] Media screen grid mode (see note below)
-* [X] Media screen grid attachment details
+* [X] Block editor: Image block (including its derivatives such as Cover, Media & Text, Inline image)
+* [X] Block editor: Gallery block
+* [X] Block editor: Video block
+* [X] Block editor: Audio block
+* [X] Block editor: File block
+* [X] Block editor: Featured image
+* [X] Classic editor: Images and image galleries
+* [X] Classic editor: Videos and video playlists
+* [X] Classic editor: Audio and audio playlists
+* [X] Classic editor: Featured image
+* [X] Classic editor: Other file types
+* [X] Media screen: List mode
+* [X] Media screen: Grid mode
+* [X] Media screen: Grid attachment details
 * [X] Attachment editing screen
 
 The following features *should* work but have yet to be completely tested:
@@ -32,11 +36,6 @@ The following features *should* work but have yet to be completely tested:
 
 The following features are not yet supported:
 
-* [ ] Images in the classic editor
-* [ ] Videos in the classic editor
-* [ ] Audio in the classic editor
-* [ ] Galleries in the classic editor
-* [ ] Other file types in the classic editor
 * [ ] Deep linking to the media screen grid attachment details
 * [ ] Setting the featured image for a non-image media item automatically, when one is available (eg. video poster)
 * [ ] Responsive image srcsets on images within post content
