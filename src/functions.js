@@ -1,5 +1,5 @@
 
-function extend_toolbar( toolbar, selector ) {
+export function extend_toolbar( toolbar, selector ) {
 	return toolbar.extend( {
 		set: function( id, view, options ) {
 			if ( selector === id ) {
@@ -11,7 +11,7 @@ function extend_toolbar( toolbar, selector ) {
 	} );
 }
 
-function get_click_handler( item ) {
+export function get_click_handler( item ) {
 	let click_handler = item.click;
 	const attribute = ( item.requires.library ? 'library' : 'selection' );
 
@@ -50,7 +50,58 @@ function get_click_handler( item ) {
 	}
 }
 
-export {
-	get_click_handler,
-	extend_toolbar,
+export function addProviderFilter() {
+	// Short circuit if we don't have providers
+	if ( ! AMF_DATA || ! AMF_DATA.hasOwnProperty( 'providers' ) ) {
+		return;
+	}
+
+	// Override core styles that allow only two filter inputs
+	addInlineStyle( '.media-modal-content .media-frame select.attachment-filters { width: 150px }' );
+
+	// Create a new MediaLibraryProviderFilter we later will instantiate
+	var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend({
+		id: 'media-attachment-provider-filter',
+
+		createFilters: function() {
+			var filters = {};
+			// Formats the 'providers' we've included via wp_localize_script()
+			_.each( AMF_DATA.providers || {}, function( value, index ) {
+				filters[ index ] = {
+					text: value,
+					props: {
+						provider: index,
+					}
+				};
+			});
+			this.filters = filters;
+		}
+	});
+
+	// Extend and override wp.media.view.AttachmentsBrowser to include our new filter
+	var AttachmentsBrowser = wp.media.view.AttachmentsBrowser;
+	wp.media.view.AttachmentsBrowser = wp.media.view.AttachmentsBrowser.extend({
+		createToolbar: function() {
+			// Make sure to load the original toolbar
+			AttachmentsBrowser.prototype.createToolbar.call( this );
+			this.toolbar.set( 'MediaLibraryProviderFilter', new MediaLibraryProviderFilter({
+				controller: this.controller,
+				model:      this.collection.props,
+				priority: -75
+			}).render() );
+		}
+	});
+}
+
+export function addInlineStyle( styles ) {
+	var css = document.createElement('style');
+	css.type = 'text/css';
+
+	if ( css.styleSheet ) {
+		css.styleSheet.cssText = styles;
+	} else {
+		css.appendChild( document.createTextNode( styles ) );
+	}
+
+	document.getElementsByTagName( 'head' )[0].appendChild( css );
 }

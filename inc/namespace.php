@@ -60,8 +60,21 @@ function enqueue_scripts() : void {
 			$asset_file['dependencies']
 		),
 		$asset_file['version'],
-		false
+		true
 	);
+
+	wp_localize_script( 'asset-manager-framework', 'AMF_DATA', get_script_data() );
+}
+
+function get_script_data() : array {
+	$providers = array_reduce( get_providers(), function( array $carry, Provider $provider ) : array {
+		$carry[ $provider::$id ] = $provider::$name;
+		return $carry;
+	}, [] );
+
+	return apply_filters( 'amf/script/data', [
+		'providers' => $providers,
+	] );
 }
 
 function ajax_select() : void {
@@ -155,17 +168,23 @@ function get_attachment_by_id( string $id ) :? WP_Post {
 	return $query->next_post();
 }
 
-function get_provider() : Provider {
-	static $provider = null;
+function get_providers() : array {
+	static $providers = null;
 
-	if ( $provider ) {
-		return $provider;
+	if ( $providers !== null ) {
+		return $providers;
 	}
 
-	$provider_class = apply_filters( 'amf/provider_class', __NAMESPACE__ . '\BlankProvider' );
-	$provider = new $provider_class();
+	$provider_classes = apply_filters( 'amf/provider_classes', [
+		__NAMESPACE__ . '\BlankProvider'
+	] );
 
-	return $provider;
+	$providers = [];
+	foreach ( $provider_classes as $provider_class ) {
+		$providers[ $provider_class::$id ] = new $provider_class();
+	}
+
+	return $providers;
 }
 
 function ajax_query_attachments() : void {
@@ -183,8 +202,30 @@ function ajax_query_attachments() : void {
 		wp_send_json_error();
 	}
 
+	if ( ! isset( $args['provider'] ) ) {
+		if ( ! apply_filters( 'amf/allow_empty_provider', true ) ) {
+			wp_send_json_error( [ 'message' => 'Missing provider ID.' ] );
+		}
+		$provider_id = '';
+	} else {
+		$provider_id = $args['provider'];
+	}
+
+	$providers = get_providers();
+
+	if ( ! isset( $providers[ $provider_id ] ) ) {
+		wp_send_json_error( [ 'message' => 'Provider not found.' ] );
+	}
+
+	// Short circuit for local media provider
+	if ( empty( $provider_id ) ) {
+		return;
+	}
+
+	$provider = $providers[ $provider_id ];
+
 	try {
-		$items = get_provider()->request_items( $args );
+		$items = $provider->request_items( $args );
 	} catch ( Exception $e ) {
 		wp_send_json_error(
 			[

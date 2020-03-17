@@ -14,6 +14,9 @@ use WP_Query;
 
 abstract class Provider {
 
+	public static $id;
+	public static $name;
+
 	/**
 	 * Perform a request to a media provider and return results according to the arguments.
 	 *
