@@ -17,7 +17,7 @@ function extend_toolbar( toolbar, selector ) {
 				view.click = get_click_handler( view );
 			}
 
-			return toolbar.prototype.set.apply( this, [ id, view, options ] );
+			return toolbar.prototype.set.apply( this, arguments );
 		}
 	} );
 }
