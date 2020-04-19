@@ -1,6 +1,17 @@
 
+/**
+ * @param {wp.media.view.Toolbar} toolbar
+ * @param {string} selector
+ * @return {wp.media.view.Toolbar}
+ */
 function extend_toolbar( toolbar, selector ) {
 	return toolbar.extend( {
+		/**
+		 * @param {string|Object} id
+		 * @param {Backbone.View|Object} view
+		 * @param {Object} [options={}]
+		 * @return {wp.media.view.Toolbar} Returns itself to allow chaining.
+		 */
 		set: function( id, view, options ) {
 			if ( selector === id ) {
 				view.click = get_click_handler( view );

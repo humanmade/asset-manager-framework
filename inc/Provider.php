@@ -21,17 +21,17 @@ abstract class Provider {
 	 * process the results, and return a Media collection.
 	 *
 	 * @param array $args {
-	 *      Arguments for the request for media items, typically coming directly from the media manager filters.
+	 *     Arguments for the request for media items, typically coming directly from the media manager filters.
 	 *
-	 *      @type int      $paged          The page number of the results.
-	 *      @type int      $posts_per_page Optional. Maximum number of results to return.
-	 *      @type string   $s              Optional. The search query.
-	 *      @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
-	 *      @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
-	 *      @type string   $order          Optional. Order. 'DESC' (for 'date') or 'ASC' (for 'menu_order ID').
-	 *      @type int      $author         Optional. User ID of author to restrict results to.
-	 *      @type int      $year           Optional. Four digit year number if results are filtered by date.
-	 *      @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
+	 *     @type int      $paged          The page number of the results.
+	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40.
+	 *     @type string   $s              Optional. The search query.
+	 *     @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
+	 *     @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
+	 *     @type string   $order          Optional. Order. 'DESC' (for 'date') or 'ASC' (for 'menu_order ID').
+	 *     @type int      $author         Optional. User ID if results are filtered by author.
+	 *     @type int      $year           Optional. Four digit year number if results are filtered by date.
+	 *     @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
 	 * }
 	 * @throws Exception Thrown if an unrecoverable error occurs.
 	 * @return MediaList The collection of Media items. Can be an empty collection if there are no matching results.
@@ -140,6 +140,10 @@ abstract class Provider {
 		return $items;
 	}
 
+	/**
+	 * Performs an HTTP API request and returns the response. Abstracts away the HTTP error handling so
+	 * an implementation only needs to concern itself with the happy path.
+	 */
 	final public function remote_request( string $url, array $args ) : string {
 		$response = wp_remote_request(
 			$url,

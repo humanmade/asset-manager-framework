@@ -2,9 +2,9 @@
 
 This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider, such as a DAM.
 
-It handles the necessary integration with WordPress (Ajax endpoints, REST API endpoints, and Backbone components), leaving you to only focus on the connection to your DAM.
+It handles the necessary integration with WordPress (Ajax endpoints and Backbone components) leaving you to focus on the API connection to your DAM.
 
-The intention is that the media manager, the block editor, the classic editor, media endpoints of the REST API, and anything that calls `wp.media()` should "just work" and not need to implement any changes in order to support a media library that is powered by an external provider.
+The intention is that the media manager, the block editor, the classic editor, the REST API, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
 
 ## Status
 
@@ -34,12 +34,6 @@ The following plugins have been tested and are known to be compatible:
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
 
-The following features *should* work but have yet to be completely tested:
-
-* [ ] Mostly any code that calls `wp.media()` to open the media manager and work with the resulting selected attachment
-* [ ] Default REST API `/media` endpoints
-* [ ] Default XML-RPC requests for media
-
 The following features are not yet supported:
 
 * [ ] Deep linking to the media screen grid attachment details
@@ -53,7 +47,7 @@ The following new features are planned but not yet implemented:
 The following features will *not* be supported:
 
 * Side-loading media from an external media provider. The intention of this framework is that media files remain remotely hosted.
-* Built-in handling of authentication that may be required to communicate with your external media provider. This responsibility lies within your implementation.
+* Built-in handling of authentication required to communicate with your external media provider. This responsibility lies within your implementation. Consider using [the Keyring plugin](https://wordpress.org/plugins/keyring/) if an OAuth connection is required.
 * Built-in support for any given media provider (such as Resource Space, AEM, or Bynder). This is a framework built to be extended in order to connect it to a media provider.
 
 ## Implementation
@@ -67,7 +61,7 @@ The design decision behind this is that allowing for external items to be browse
 
 Asset Manager Framework instead allows external media items to be browsed in the media library grid, but as soon as an item is selected for use (eg. to be inserted into a post or used as a featured image), an attachment is created for the media item, and this gets returned by the media manager.
 
-The actual media file does not get sideloaded into WordPress - it intentionally remains at its external URL. The attachment object refers to the correct external URL as necessary, while maintaining a local attachment that can be referenced, queried, etc.
+The actual media file does not get sideloaded into WordPress - it intentionally remains at its external URL. The correct external URL gets referred to as necessary, while a local object attachment is maintained that can be referenced and queried within WordPress.
 
 ## Integration
 
