@@ -12,33 +12,23 @@ Current status: **MVP.** This is not yet ready for production use.
 
 The following features work as expected:
 
-* [X] Block editor: Image block (including its derivatives such as Cover, Media & Text, Inline image)
-* [X] Block editor: Gallery block
-* [X] Block editor: Video block
-* [X] Block editor: Audio block
-* [X] Block editor: File block
-* [X] Block editor: Featured image
-* [X] Classic editor: Images and image galleries
-* [X] Classic editor: Videos and video playlists
-* [X] Classic editor: Audio and audio playlists
-* [X] Classic editor: Featured image
-* [X] Classic editor: Other file types
-* [X] Media screen: List mode
-* [X] Media screen: Grid mode
-* [X] Media screen: Grid attachment details
-* [X] Attachment editing screen
+* [X] Block editor: All media features
+* [X] Classic editor: All media features
+* [X] Media screen: All features
+* [X] Widgets: All media widgets
+* [ ] Customizer:
+    - [X] Background Image
+    - [ ] Logo (functions if you skip cropping)
+    - [ ] Site Icon (unable to skip cropping of large images)
+* [X] REST API media endpoints
+* [X] XML-RPC requests for media
+* [X] Any code that calls `wp.media()` to open the media manager and work with the selected attachments
 
-The following plugins have been tested and are known to be compatible:
+The following custom field libraries have been tested and are known to be compatible:
 
 * [X] CMB2
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
-
-The following features are not yet supported:
-
-* [ ] Deep linking to the media screen grid attachment details
-* [ ] Setting the featured image for a non-image media item automatically, when one is available (eg. video poster)
-* [ ] Responsive image srcsets on images within post content
 
 The following new features are planned but not yet implemented:
 
