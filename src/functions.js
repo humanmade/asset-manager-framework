@@ -43,7 +43,13 @@ function get_click_handler( item ) {
 
 			click_handler();
 		} ).fail( response => {
-			alert( response[0].message ?? __( 'An unknown error occurred.', 'asset-manager-framework' ) );
+			let message = ( 'An unknown error occurred.' );
+
+			if ( response && response[0] && response[0].message ) {
+				message = response[0].message;
+			}
+
+			alert( message );
 
 			event.target.disabled = false;
 		} );
