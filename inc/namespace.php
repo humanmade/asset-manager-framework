@@ -71,7 +71,11 @@ function ajax_select() : void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$post_id = intval( $_REQUEST['post'] ?? 0 );
 
-	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+	if ( ! current_user_can( 'upload_files' ) ) {
+		wp_send_json_error();
+	}
+
+	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
 		wp_send_json_error();
 	}
 
