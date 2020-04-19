@@ -15,8 +15,8 @@ use WP_Query;
 
 function bootstrap() : void {
 	add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
-	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
-	add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'admin_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
 
 	// Replace the default wp_ajax_query_attachments handler with our own.
 	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
