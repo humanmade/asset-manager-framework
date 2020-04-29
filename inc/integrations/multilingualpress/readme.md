@@ -17,3 +17,4 @@ This integration addresses the following issues:
 ## Documentation
 
 * https://multilingualpress.org/docs/copy-post-meta/
+* https://multilingualpress.org/docs/run-code-copy-source-content-option-checked/

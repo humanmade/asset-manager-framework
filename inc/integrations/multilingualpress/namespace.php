@@ -27,20 +27,27 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 		FILTER_FORCE_ARRAY
 	);
 
-	foreach ( $translations as $translation ) {
-		if ( $translation['remote-thumbnail-copy'] !== '1' ) {
-			continue;
-		}
+	$remote_site_id = $context->remoteSiteId();
+	$remote_post_id = $context->remotePostId();
+	$source_post_id = $context->sourcePostId();
 
-		$remote_site_id = $context->remoteSiteId();
-		$remote_post_id = $context->remotePostId();
-		$source_post_id = $context->sourcePostId();
+	// Bail if there's something wrong with the request
+	if ( ! isset( $translations[ "site-{$remote_site_id}" ] ) ) {
+		return $keys;
+	}
+
+	$translation = $translations[ "site-{$remote_site_id}" ];
+
+		// Bail if the user hasn't requested to copy the featured image
+		if ( $translation['remote-thumbnail-copy'] !== '1' ) {
+			return $keys;
+		}
 
 		$source_attachment_id = get_post_meta( $source_post_id, '_thumbnail_id', true );
 
 		// Bail if there's no featured image
 		if ( empty( $source_attachment_id ) ) {
-			continue;
+			return $keys;
 		}
 
 		$source_attachment = get_post( $source_attachment_id );
@@ -64,7 +71,7 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 			// There doesn't appear to be an error reporting mechanism in MLP, so we'll just bail if there's a problem
 			// creating the attachment on the remote site
 			if ( is_wp_error( $remote_attachment_id ) ) {
-				continue;
+				return $keys;;
 			}
 
 			// Set featured image ID for remote post
@@ -87,7 +94,6 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 
 		// Switch back to the source site
 		restore_current_blog();
-	}
 
 	return $keys;
 }
