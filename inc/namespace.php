@@ -43,7 +43,7 @@ function init() : void {
 	// Load the integration layer for MLP if it's active
 	if ( class_exists( '\Inpsyde\MultilingualPress\MultilingualPress', false ) ) {
 		require_once __DIR__ . '/integrations/multilingualpress/namespace.php';
-		MultilingualPress\bootstrap();
+		Integrations\MultilingualPress\bootstrap();
 	}
 
 	do_action( 'amf/loaded' );

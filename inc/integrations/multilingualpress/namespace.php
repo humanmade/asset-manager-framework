@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace AssetManagerFramework\MultilingualPress;
+namespace AssetManagerFramework\Integrations\MultilingualPress;
 
 use Inpsyde\MultilingualPress\ {
 	TranslationUi\Post\RelationshipContext,
