@@ -15,10 +15,21 @@ use Inpsyde\MultilingualPress\ {
 	Framework\Http\PhpServerRequest,
 };
 
+/**
+ * Bootstrap actions and filters.
+ */
 function bootstrap() : void {
 	add_filter( PostRelationSaveHelper::FILTER_SYNC_KEYS, __NAMESPACE__ . '\sync_thumbnail', 10, 3 );
 }
 
+/**
+ * Synchronises the featured image to the translation site when requested.
+ *
+ * @param string[]            $keys    Array of post meta key names to sync. Unused.
+ * @param RelationshipContext $context Context for the current translation.
+ * @param PhpServerRequest    $request The translation UI request.
+ * @return string[] The unmodified array of post meta keys to sync.
+ */
 function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerRequest $request ) : array {
 	$translations = $request->bodyValue(
 		'multilingualpress',
