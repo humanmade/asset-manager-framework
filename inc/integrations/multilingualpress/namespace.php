@@ -36,7 +36,14 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 		$remote_post_id = $context->remotePostId();
 		$source_post_id = $context->sourcePostId();
 
-		$source_attachment = get_post( get_post_meta( $source_post_id, '_thumbnail_id', true ) );
+		$source_attachment_id = get_post_meta( $source_post_id, '_thumbnail_id', true );
+
+		// Bail if there's no featured image
+		if ( empty( $source_attachment_id ) ) {
+			continue;
+		}
+
+		$source_attachment = get_post( $source_attachment_id );
 		$source_attachment_meta = get_post_meta( $source_attachment->ID );
 
 		// Switch to the target site
@@ -50,8 +57,15 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 			$remote_attachment_id = wp_insert_attachment(
 				$source_attachment,
 				false,
-				$remote_post_id
+				$remote_post_id,
+				true
 			);
+
+			// There doesn't appear to be an error reporting mechanism in MLP, so we'll just bail if there's a problem
+			// creating the attachment on the remote site
+			if ( is_wp_error( $remote_attachment_id ) ) {
+				continue;
+			}
 
 			// Set featured image ID for remote post
 			add_post_meta( $remote_post_id, '_thumbnail_id', $remote_attachment_id );
