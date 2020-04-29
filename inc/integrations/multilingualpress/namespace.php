@@ -82,7 +82,7 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 		// There doesn't appear to be an error reporting mechanism in MLP, so we'll just bail if there's a problem
 		// creating the attachment on the remote site
 		if ( is_wp_error( $remote_attachment_id ) ) {
-			return $keys;;
+			return $keys;
 		}
 
 		// Set featured image ID for remote post
