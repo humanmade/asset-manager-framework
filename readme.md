@@ -24,11 +24,15 @@ The following features work as expected:
 * [X] XML-RPC requests for media
 * [X] Any code that calls `wp.media()` to open the media manager and work with the selected attachments
 
-The following custom field libraries have been tested and are known to be compatible:
+The following custom field libraries have been tested and are compatible out of the box:
 
 * [X] CMB2
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
+
+The following third party plugins are supported via an integration layer included in MLP:
+
+* [X] MultilingualPress 3
 
 The following new features are planned but not yet implemented:
 

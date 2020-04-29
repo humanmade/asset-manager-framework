@@ -40,6 +40,7 @@ function init() : void {
 	require_once __DIR__ . '/Document.php';
 	require_once __DIR__ . '/MediaList.php';
 
+	// Load the integration layer for MLP if it's active
 	if ( class_exists( '\Inpsyde\MultilingualPress\MultilingualPress', false ) ) {
 		require_once __DIR__ . '/integrations/multilingualpress/namespace.php';
 		MultilingualPress\bootstrap();
