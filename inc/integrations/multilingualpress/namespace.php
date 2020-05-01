@@ -19,7 +19,7 @@ use Inpsyde\MultilingualPress\ {
  * Bootstrap actions and filters.
  */
 function bootstrap() : void {
-	add_filter( PostRelationSaveHelper::FILTER_SYNC_KEYS, __NAMESPACE__ . '\sync_thumbnail', 10, 3 );
+	add_filter( PostRelationSaveHelper::FILTER_SYNC_KEYS, __NAMESPACE__ . '\\sync_thumbnail', 10, 3 );
 }
 
 /**
