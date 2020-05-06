@@ -15,6 +15,8 @@ use Inpsyde\MultilingualPress\ {
 	Framework\Http\PhpServerRequest,
 };
 
+use function AssetManagerFramework\get_attachment_by_id;
+
 /**
  * Bootstrap actions and filters.
  */
@@ -67,9 +69,9 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 	// Switch to the target site
 	switch_to_blog( $remote_site_id );
 
-	$remote_attachment_id = get_post_meta( $remote_post_id, '_thumbnail_id', true );
+	$remote_attachment = get_attachment_by_id( $source_attachment->post_name );
 
-	if ( ! $remote_attachment_id ) {
+	if ( ! $remote_attachment ) {
 		// No remote attachment, create one copied from source attachment
 		$source_attachment->ID = null;
 		$remote_attachment_id = wp_insert_attachment(
@@ -84,17 +86,18 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 		if ( is_wp_error( $remote_attachment_id ) ) {
 			return $keys;
 		}
-
-		// Set featured image ID for remote post
-		add_post_meta( $remote_post_id, '_thumbnail_id', $remote_attachment_id );
 	} else {
 		// Update existing remote attachment with source attachment
+		$remote_attachment_id = $remote_attachment->ID;
 		$source_attachment->ID = $remote_attachment_id;
 		$source_attachment->post_parent = $remote_post_id;
 		wp_update_post(
 			$source_attachment
 		);
 	}
+
+	// Set or update featured image ID for remote post
+	update_post_meta( $remote_post_id, '_thumbnail_id', $remote_attachment_id );
 
 	// Iterate all source attachment metadata and apply to remote post
 	foreach ( $source_attachment_meta as $key => $values ) {
