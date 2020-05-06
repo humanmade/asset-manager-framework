@@ -58,8 +58,17 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 
 	$source_attachment_id = get_post_meta( $source_post_id, '_thumbnail_id', true );
 
-	// Bail if there's no featured image
+	// Return early if there's no featured image
 	if ( empty( $source_attachment_id ) ) {
+		// Switch to the target site
+		switch_to_blog( $remote_site_id );
+
+		// Remove the featured image from the remote post too
+		delete_post_meta( $remote_post_id, '_thumbnail_id' );
+
+		// Switch back to the source site
+		restore_current_blog();
+
 		return $keys;
 	}
 
