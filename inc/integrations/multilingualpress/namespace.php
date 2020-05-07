@@ -60,10 +60,10 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 
 	// Return early if there's no featured image
 	if ( empty( $source_attachment_id ) ) {
-		// Switch to the target site
+		// Switch to the remote site
 		switch_to_blog( $remote_site_id );
 
-		// Remove the featured image from the remote post too
+		// Remove the featured image from the remote post
 		delete_post_meta( $remote_post_id, '_thumbnail_id' );
 
 		// Switch back to the source site
@@ -75,7 +75,7 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 	$source_attachment = get_post( $source_attachment_id );
 	$source_attachment_meta = get_post_meta( $source_attachment->ID );
 
-	// Switch to the target site
+	// Switch to the remote site
 	switch_to_blog( $remote_site_id );
 
 	$remote_attachment = get_attachment_by_id( $source_attachment->post_name );
