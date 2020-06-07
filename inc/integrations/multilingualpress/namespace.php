@@ -52,7 +52,7 @@ function sync_thumbnail( array $keys, RelationshipContext $context, PhpServerReq
 	$translation = $translations[ "site-{$remote_site_id}" ];
 
 	// Bail if the user hasn't requested to copy the featured image
-	if ( $translation['remote-thumbnail-copy'] !== '1' ) {
+	if ( empty( $translation['remote-thumbnail-copy'] ) || $translation['remote-thumbnail-copy'] !== '1' ) {
 		return $keys;
 	}
 
