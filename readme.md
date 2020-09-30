@@ -2,7 +2,7 @@
 
 This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider, such as a DAM.
 
-It handles the necessary integration with WordPress (Ajax endpoints and Backbone components) leaving you to focus on the API connection to your DAM.
+It handles the necessary integration with WordPress (Ajax endpoints and Backbone components) leaving you to focus on just the server-side API connection to your DAM.
 
 The intention is that the media manager, the block editor, the classic editor, the REST API, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
 
@@ -30,7 +30,7 @@ The following custom field libraries have been tested and are compatible out of 
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
 
-The following third party plugins are supported via an integration layer included in MLP:
+The following third party plugins are supported via an integration layer included in AMF:
 
 * [X] MultilingualPress 3
 
