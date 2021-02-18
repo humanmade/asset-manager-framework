@@ -28,6 +28,7 @@ class Media {
 	public $height = null;
 	public $icon = '';
 	public $id = '';
+	public $image = null;
 	public $link = '';
 	public $menuOrder = 0;
 	public $meta = false;
@@ -71,6 +72,16 @@ class Media {
 
 	final public function set_filename( string $filename ) : self {
 		$this->filename = $filename;
+
+		return $this;
+	}
+
+	final public function set_image( string $image ) : self {
+		$this->image = [
+			'src' => esc_url_raw( $image ),
+			'width' => 400,
+			'height' => 400,
+		];
 
 		return $this;
 	}
