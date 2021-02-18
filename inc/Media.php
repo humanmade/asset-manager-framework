@@ -147,7 +147,7 @@ class Media {
 
 	final public function set_author( string $author_name, string $author_link = '' ) : self {
 		$this->authorName = $author_name;
-		$this->authorLink = $author_link;
+		$this->authorLink = esc_url_raw( $author_link );
 
 		return $this;
 	}
