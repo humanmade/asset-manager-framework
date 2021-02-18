@@ -54,6 +54,10 @@ abstract class Provider {
 		return false;
 	}
 
+	public function supports_dynamic_image_resizing() : bool {
+		return false;
+	}
+
 	public function supports_filter_search() : bool {
 		return true;
 	}
