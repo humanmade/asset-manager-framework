@@ -85,6 +85,8 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
+	$supports_dynamic_image_resizing = get_provider()->supports_dynamic_image_resizing();
+
 	$attachments = [];
 
 	foreach ( $selected as $selection ) {
@@ -95,13 +97,15 @@ function ajax_select() : void {
 			continue;
 		}
 
+		$mime_type = $selection['mime'];
+
 		$args = [
 			'post_title' => $selection['title'],
 			'post_parent' => $post_id,
 			'post_name' => $selection['id'],
 			'post_content' => $selection['description'],
 			'post_excerpt' => $selection['caption'],
-			'post_mime_type' => $selection['mime'],
+			'post_mime_type' => $mime_type,
 			'guid' => $selection['url'],
 		];
 
@@ -125,6 +129,18 @@ function ajax_select() : void {
 
 		if ( ! empty( $selection['height'] ) ) {
 			$metadata['height'] = intval( $selection['height'] );
+		}
+
+		if ( ! empty( $selection['sizes'] ) && ! $supports_dynamic_image_resizing ) {
+			$metadata['sizes'] = array_map( function ( array $size ) use ( $mime_type ): array {
+
+				return [
+					'file'      => $size['url'],
+					'width'     => $size['width'],
+					'height'    => $size['height'],
+					'mime-type' => $mime_type,
+				];
+			}, $selection['sizes'] );
 		}
 
 		wp_update_attachment_metadata( $attachment_id, $metadata );
