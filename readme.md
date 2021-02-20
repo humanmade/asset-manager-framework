@@ -1,10 +1,10 @@
 # Asset Manager Framework
 
-This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider, such as a DAM.
+This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider such as a DAM, another WordPress website, or a central site within a Multisite installation.
 
 It handles the necessary integration with WordPress (Ajax endpoints and Backbone components) leaving you to focus on just the server-side API connection to your DAM.
 
-The intention is that the media manager, the block editor, the classic editor, the REST API, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
+The intention is that the media manager, the block editor, the classic editor, the REST API, XML-RPC, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
 
 ## Status
 
@@ -30,26 +30,26 @@ The following custom field libraries have been tested and are compatible out of 
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
 
-The following third party plugins are supported via an integration layer included in AMF:
+The following third party plugins are supported via an included integration layer:
 
 * [X] MultilingualPress 3
 
 The following new features are planned but not yet implemented:
 
-* [ ] Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)
+* [ ] [Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)](https://github.com/humanmade/asset-manager-framework/issues/13)
 
 The following features will *not* be supported:
 
 * Side-loading media from an external media provider. The intention of this framework is that media files remain remotely hosted.
 * Built-in handling of authentication required to communicate with your external media provider. This responsibility lies within your implementation. Consider using [the Keyring plugin](https://wordpress.org/plugins/keyring/) if an OAuth connection is required.
-* Built-in support for any given media provider (such as Resource Space, AEM, or Bynder). This is a framework built to be extended in order to connect it to a media provider.
+* Built-in support for any given media provider (such as AEM Assets, Aprimo, Bynder, or ResourceSpace). This is a framework built to be extended in order to connect it to a media provider.
 
 ## Implementation
 
-There are two main parts to the way this plugin works.
+There are two main aspects to the plugin.
 
-1. Allowing the media manager grid to display external items which are not existing attachments.
-2. Subsequently creating a local attachment for an external item when it's selected for use.
+1. Allow the media manager grid to display external items which are not existing attachments.
+2. Subsequently create a local attachment for an external item when it's selected for use.
 
 The design decision behind this is that allowing for external items to be browsed in the media manager is quite straight forward, but unless each item is associated with a local attachment then most of the rest of WordPress breaks when you go to use an item. Previous attempts to do this have involved lying about attachment IDs, or switching to another site on a Multisite network to provide a media item. Neither approach is desirable because such lies need to be maintained and eventually you run into a situation where your lies become unravelled.
 
