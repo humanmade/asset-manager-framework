@@ -135,9 +135,9 @@ function ajax_select() : void {
 			$metadata['sizes'] = array_map( function ( array $size ) use ( $mime_type ): array {
 
 				return [
-					'file'      => $size['url'],
-					'width'     => $size['width'],
-					'height'    => $size['height'],
+					'file' => $size['url'],
+					'width' => $size['width'],
+					'height' => $size['height'],
 					'mime-type' => $mime_type,
 				];
 			}, $selection['sizes'] );
