@@ -28,16 +28,6 @@ abstract class Playable extends Media {
 		return $this;
 	}
 
-	final public function set_image( string $image ) : self {
-		$this->image = [
-			'src' => $image,
-			'width' => 400,
-			'height' => 400,
-		];
-
-		return $this;
-	}
-
 	final public function set_thumb( string $thumb ) : self {
 		$this->thumb = [
 			'src' => $thumb,
