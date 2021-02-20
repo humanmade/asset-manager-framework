@@ -17,6 +17,8 @@ class Media {
 	public $amfMeta = [];
 	public $attachmentExists = false;
 	public $author = 0;
+	public $authorLink = '';
+	public $authorName = '';
 	public $caption = '';
 	public $date = null;
 	public $dateFormatted = null;
@@ -139,6 +141,13 @@ class Media {
 
 	final public function set_sizes( array $sizes ) : self {
 		$this->sizes = $sizes;
+
+		return $this;
+	}
+
+	final public function set_author( string $author_name, string $author_link = '' ) : self {
+		$this->authorName = $author_name;
+		$this->authorLink = esc_url_raw( $author_link );
 
 		return $this;
 	}
