@@ -6,6 +6,14 @@ It handles the necessary integration with WordPress (Ajax endpoints and Backbone
 
 The intention is that the media manager, the block editor, the classic editor, the REST API, XML-RPC, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
 
+## Installation
+
+Install with [Composer](https://getcomposer.org):
+
+```sh
+composer require humanmade/asset-manager-framework
+```
+
 ## Status
 
 Current status: **MVP.** This is not yet ready for production use.
