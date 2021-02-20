@@ -24,6 +24,11 @@
 		"phpcompatibility/phpcompatibility-wp": "~2.1.0",
 		"wp-coding-standards/wpcs": "~2.2.0"
 	},
+	"autoload": {
+		"psr-4": {
+			"AssetManagerFramework\\": "inc/"
+		}
+	},
 	"scripts": {
 		"test:cs": [
 			"vendor/bin/phpcs -nps --colors --report-code --report-summary --report-width=80 ."

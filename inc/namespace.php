@@ -30,18 +30,8 @@ function bootstrap() : void {
 }
 
 function init() : void {
-	require_once __DIR__ . '/Provider.php';
-	require_once __DIR__ . '/BlankProvider.php';
-	require_once __DIR__ . '/Media.php';
-	require_once __DIR__ . '/Playable.php';
-	require_once __DIR__ . '/Image.php';
-	require_once __DIR__ . '/Audio.php';
-	require_once __DIR__ . '/Video.php';
-	require_once __DIR__ . '/Document.php';
-	require_once __DIR__ . '/MediaList.php';
-
 	// Load the integration layer for MLP if it's active
-	if ( class_exists( '\Inpsyde\MultilingualPress\MultilingualPress', false ) ) {
+	if ( class_exists( 'Inpsyde\MultilingualPress\MultilingualPress', false ) ) {
 		require_once __DIR__ . '/integrations/multilingualpress/namespace.php';
 		Integrations\MultilingualPress\bootstrap();
 	}

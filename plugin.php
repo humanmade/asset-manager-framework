@@ -30,6 +30,10 @@ declare( strict_types=1 );
 
 namespace AssetManagerFramework;
 
+if ( is_readable( __DIR__ .'/vendor/autoload.php' ) ) {
+	include_once __DIR__ .'/vendor/autoload.php';
+}
+
 require_once __DIR__ . '/inc/namespace.php';
 
 bootstrap();
