@@ -70,7 +70,7 @@ The actual media file does not get sideloaded into WordPress - it intentionally 
 There are two steps needed to integrate a media provider using the Asset Manager Framework:
 
 1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `request()` method to fetch results from your external media provider based on query arguments from the media manager.
-2. Hook into the `amf/provider_class` filter to register your provider for use.
+2. Hook into the `amf/provider` filter to register your provider for use.
 
 Full documentation is coming soon, but for now here's an example of a provider which supplies images from placekitten.com:
 
@@ -78,7 +78,7 @@ Full documentation is coming soon, but for now here's an example of a provider w
 use AssetManagerFramework\{
 	Provider,
 	MediaList,
-	Image,
+	Image
 };
 
 class KittenProvider extends Provider {
@@ -109,14 +109,24 @@ class KittenProvider extends Provider {
 
 }
 
-add_filter( 'amf/provider_class', function() {
-	return 'KittenProvider';
+add_filter( 'amf/provider', function () {
+	return new KittenProvider();
 } );
 ```
 
 Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
+
+Since you have access to the current provider instance via the `amf/provider`, you could also use it and decorate it:
+
+```php
+add_filter( 'amf/provider', function ( Provider $provider ) {
+	return new DecoratingProvider( $provider );
+} );
+```
+
+This is useful, for example, when you are using a third-party provider implementation and want to adapt certain behavior.
 
 # License: GPLv2 #
 
