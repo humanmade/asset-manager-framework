@@ -126,7 +126,7 @@ add_filter( 'amf/provider', function ( Provider $provider ) {
 } );
 ```
 
-This is useful, for example, when you are using a third-party provider implementation and want to adapt certain behavior.
+This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior.
 
 # License: GPLv2 #
 
