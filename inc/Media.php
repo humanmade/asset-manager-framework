@@ -33,7 +33,7 @@ class Media {
 	public $image = null;
 	public $link = '';
 	public $menuOrder = 0;
-	public $meta = false;
+	public $meta = [];
 	public $mime = '';
 	public $modified = null;
 	public $name = '';
@@ -159,6 +159,18 @@ class Media {
 	final public function set_author( string $author_name, string $author_link = '' ) : self {
 		$this->authorName = $author_name;
 		$this->authorLink = esc_url_raw( $author_link );
+
+		return $this;
+	}
+
+	final public function add_meta( string $key, $value ) : self {
+		$this->meta[ $key ] = $value;
+
+		return $this;
+	}
+
+	final public function set_meta( array $meta ) : self {
+		$this->meta = $meta;
 
 		return $this;
 	}
