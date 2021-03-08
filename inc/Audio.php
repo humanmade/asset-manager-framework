@@ -27,11 +27,4 @@ class Audio extends Playable {
 
 		return $this;
 	}
-
-	final public function set_bitrate( int $bitrate, string $bitrate_mode = '' ) : self {
-		$this->meta['bitrate'] = $bitrate;
-		$this->meta['bitrate_mode'] = $bitrate_mode;
-
-		return $this;
-	}
 }
