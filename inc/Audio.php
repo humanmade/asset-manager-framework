@@ -16,14 +16,14 @@ class Audio extends Playable {
 
 	final public function set_album( string $album ) : self {
 		$this->album = $album;
-		$this->meta['album'] = $album;
+		$this->add_meta( 'album', $album );
 
 		return $this;
 	}
 
 	final public function set_artist( string $artist ) : self {
 		$this->artist = $artist;
-		$this->meta['artist'] = $artist;
+		$this->add_meta( 'artist', $artist );
 
 		return $this;
 	}
