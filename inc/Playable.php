@@ -31,4 +31,11 @@ abstract class Playable extends Media {
 		return $this;
 	}
 
+	final public function set_bitrate( int $bitrate, string $bitrate_mode = '' ) : self {
+		$this->add_meta( 'bitrate', $bitrate );
+		$this->add_meta( 'bitrate_mode', $bitrate_mode );
+
+		return $this;
+	}
+
 }
