@@ -30,7 +30,7 @@ class Media {
 	public $id = '';
 	public $link = '';
 	public $menuOrder = 0;
-	public $meta = false;
+	public $meta = [];
 	public $mime = '';
 	public $modified = null;
 	public $name = '';
@@ -139,6 +139,18 @@ class Media {
 
 	final public function set_sizes( array $sizes ) : self {
 		$this->sizes = $sizes;
+
+		return $this;
+	}
+
+	final public function add_meta( string $key, $value ) : self {
+		$this->meta[ $key ] = $value;
+
+		return $this;
+	}
+
+	final public function set_meta( array $meta ) : self {
+		$this->meta = $meta;
 
 		return $this;
 	}

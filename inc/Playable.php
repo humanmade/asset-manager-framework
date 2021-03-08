@@ -13,17 +13,10 @@ abstract class Playable extends Media {
 
 	public $fileLength = '';
 	public $fileLengthHumanReadable = '';
-	public $meta = [];
 
 	final public function set_length( string $duration ) : self {
 		$this->fileLength = $duration;
 		$this->fileLengthHumanReadable = human_readable_duration( $duration );
-
-		return $this;
-	}
-
-	final public function set_meta( array $meta ) : self {
-		$this->meta = $meta;
 
 		return $this;
 	}
