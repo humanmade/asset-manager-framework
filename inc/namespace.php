@@ -97,6 +97,7 @@ function ajax_select() : void {
 			'post_excerpt' => $selection['caption'],
 			'post_mime_type' => $mime_type,
 			'guid' => $selection['url'],
+			'meta_input' => $selection['meta'],
 		];
 
 		$attachment_id = wp_insert_attachment( $args, false, 0, true );
@@ -109,9 +110,12 @@ function ajax_select() : void {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
 
-		$metadata = [
-			'file' => wp_slash( $selection['filename'] ),
-		];
+		$metadata = wp_get_attachment_metadata( $attachment_id, true );
+		if ( ! is_array( $metadata ) ) {
+			$metadata = [];
+		}
+
+		$metadata['file'] = wp_slash( $selection['filename'] );
 
 		if ( ! empty( $selection['width'] ) ) {
 			$metadata['width'] = intval( $selection['width'] );
