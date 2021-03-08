@@ -182,8 +182,7 @@ function get_provider() : Provider {
 		return $provider;
 	}
 
-	$provider_class = apply_filters( 'amf/provider_class', __NAMESPACE__ . '\BlankProvider' );
-	$provider = new $provider_class();
+	$provider = apply_filters( 'amf/provider', new BlankProvider() );
 
 	return $provider;
 }
