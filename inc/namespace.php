@@ -153,7 +153,7 @@ function ajax_select() : void {
 }
 
 function replace_attached_file( $file, int $attachment_id ) : string {
-	$metadata = wp_get_attachment_metadata( $attachment_id );
+	$metadata = wp_get_attachment_metadata( $attachment_id, true );
 
 	return $metadata['file'] ?? '';
 }
