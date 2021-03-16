@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use WP_Http;
 use WP_Post;
 use WP_Query;
 
@@ -211,7 +212,8 @@ function ajax_query_attachments() : void {
 					'code' => $e->getCode(),
 					'message' => $e->getMessage(),
 				],
-			]
+			],
+			WP_Http::INTERNAL_SERVER_ERROR
 		);
 	}
 
