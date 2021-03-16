@@ -16,7 +16,7 @@ composer require humanmade/asset-manager-framework
 
 ## Status
 
-Current status: **MVP.** This is not yet ready for production use.
+Current status: **Alpha.** Generally very functional but several features still in development.
 
 The following features work as expected:
 
