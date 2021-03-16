@@ -123,10 +123,10 @@ Since you have access to the current provider instance via the `amf/provider`, y
 ```php
 add_filter( 'amf/provider', function ( Provider $provider ) {
 	return new DecoratingProvider( $provider );
-} );
+}, 20 );
 ```
 
-This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior.
+This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior. Remember to use a priority later than the default for this filter, for example 20, so your code runs after the default filter.
 
 # License: GPLv2 #
 

@@ -74,6 +74,12 @@ abstract class Provider {
 		return true;
 	}
 
+	/**
+	 * Fetches a list of media items that are ultimately used directly by the media managaer.
+	 *
+	 * @param array $args Raw query arguments from the POST request in the media manager.
+	 * @return MediaList Media items for use in the media manager.
+	 */
 	final public function request_items( array $args ) : MediaList {
 		if ( isset( $args['post_parent'] ) ) {
 			// @TODO
@@ -147,6 +153,11 @@ abstract class Provider {
 	/**
 	 * Performs an HTTP API request and returns the response. Abstracts away the HTTP error handling so
 	 * an implementation only needs to concern itself with the happy path.
+	 *
+	 * @param string $url The URL for the request.
+	 * @param array  $args The arguments to pass to `wp_remote_request()`.
+	 * @throws Exception Thrown if there is an error with the request or its response code is not 200.
+	 * @return string The response body.
 	 */
 	final public function remote_request( string $url, array $args ) : string {
 		$response = wp_remote_request(
