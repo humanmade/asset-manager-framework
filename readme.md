@@ -45,12 +45,18 @@ The following third party plugins are supported via an included integration laye
 The following new features are planned but not yet implemented:
 
 * [ ] [Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)](https://github.com/humanmade/asset-manager-framework/issues/13)
+* [ ] Support for multiple simultaneous media providers
 
 The following features will *not* be supported:
 
 * Side-loading media from an external media provider. The intention of this framework is that media files remain remotely hosted.
 * Built-in handling of authentication required to communicate with your external media provider. This responsibility lies within your implementation. Consider using [the Keyring plugin](https://wordpress.org/plugins/keyring/) if an OAuth connection is required.
 * Built-in support for any given media provider (such as AEM Assets, Aprimo, Bynder, or ResourceSpace). This is a framework built to be extended in order to connect it to a media provider.
+
+## Known Implementations
+
+* [AMF WordPress](https://github.com/humanmade/amf-wordpress/) for using another WordPress site, or another site on a Multisite network, as source for your media library.
+* [AMF Unsplash](https://github.com/humanmade/amf-unsplash/) for using Unsplash as a source.
 
 ## Implementation
 
