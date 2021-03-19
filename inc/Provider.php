@@ -78,7 +78,7 @@ abstract class Provider {
 	 * Fetches a list of media items that are ultimately used directly by the media managaer.
 	 *
 	 * @param array $args Raw query arguments from the POST request in the media manager.
-	 * @throws Exception Thrown if an unrecoverable error occurs.
+	 * @throws Exception Thrown if the provider returns too many media items.
 	 * @return MediaList Media items for use in the media manager.
 	 */
 	final public function request_items( array $args ) : MediaList {
