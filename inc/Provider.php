@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use RangeException;
 use WP_Query;
 
 abstract class Provider {
@@ -78,7 +79,7 @@ abstract class Provider {
 	 * Fetches a list of media items that are ultimately used directly by the media managaer.
 	 *
 	 * @param array $args Raw query arguments from the POST request in the media manager.
-	 * @throws Exception Thrown if the provider returns too many media items.
+	 * @throws RangeException Thrown if the provider returns too many media items.
 	 * @return MediaList Media items for use in the media manager.
 	 */
 	final public function request_items( array $args ) : MediaList {
@@ -132,7 +133,7 @@ abstract class Provider {
 		}
 
 		if ( isset( $args['posts_per_page'] ) && ( $args['posts_per_page'] > 0 ) && count( $array ) > $args['posts_per_page'] ) {
-			throw new Exception(
+			throw new RangeException(
 				sprintf(
 					/* translators: %s: Argument name */
 					__( 'Too many media items were returned by the provider. The "%s" argument must be respected.', 'asset-manager-framework' ),
