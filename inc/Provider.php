@@ -75,6 +75,10 @@ abstract class Provider {
 		return true;
 	}
 
+	protected function upload( FileUpload $file ) : Media {
+		throw new Exception( __( 'Sorry, you are not allowed to upload files.', 'asset-manager-framework' ) );
+	}
+
 	/**
 	 * Fetches a list of media items that are ultimately used directly by the media managaer.
 	 *
