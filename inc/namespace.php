@@ -28,6 +28,8 @@ function bootstrap() : void {
 
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+
+	add_action( 'load-async-upload.php', __NAMESPACE__ . '\\handle_upload', 0 );
 }
 
 function init() : void {
@@ -237,4 +239,50 @@ function ajax_query_attachments() : void {
 	}
 
 	wp_send_json_success( $items->toArray() );
+}
+
+function handle_upload() : void {
+	header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+
+	if ( isset( $_REQUEST['action'] ) && 'upload-attachment' === $_REQUEST['action'] ) {
+		send_nosniff_header();
+		nocache_headers();
+
+		check_admin_referer( 'media-form' );
+
+		$provider = get_provider();
+		$parent = null;
+
+		if ( isset( $_REQUEST['post_id'] ) ) {
+			$parent = absint( $_REQUEST['post_id'] );
+		}
+
+		try {
+			$file = new FileUpload( $_FILES['async-upload'] );
+			$data = $provider->handle_upload( $file, $parent );
+
+			echo wp_json_encode(
+				[
+					'success' => true,
+					'data' => $data,
+				]
+			);
+		} catch ( Exception $e ) {
+			display_upload_attachment_error( $e->getMessage(), $_FILES['async-upload']['name'] );
+		}
+
+		wp_die();
+	}
+}
+
+function display_upload_attachment_error( string $text, string $filename ) : void {
+	echo wp_json_encode(
+		[
+			'success' => false,
+			'data' => [
+				'message'  => esc_html( $text ),
+				'filename' => esc_html( $filename ),
+			],
+		]
+	);
 }
