@@ -75,6 +75,22 @@ abstract class Provider {
 		return true;
 	}
 
+	final public function handle_upload( FileUpload $file, int $parent = null ) : Media {
+		if ( ! $this->supports_asset_create() ) {
+			throw new Exception( __( 'Sorry, you are not allowed to upload files.', 'asset-manager-framework' ) );
+		}
+
+		if ( $parent && ! current_user_can( 'edit_post', $parent ) ) {
+			throw new Exception( __( 'Sorry, you are not allowed to attach files to this post.', 'asset-manager-framework' ) );
+		}
+
+		$media = $this->upload( $file );
+
+		$media->id = insert_attachment( $media, $this, $parent )->ID;
+
+		return $media;
+	}
+
 	protected function upload( FileUpload $file ) : Media {
 		throw new Exception( __( 'Sorry, you are not allowed to upload files.', 'asset-manager-framework' ) );
 	}
