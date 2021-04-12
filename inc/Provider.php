@@ -163,15 +163,14 @@ abstract class Provider {
 	}
 
 	/**
-	 * Performs an HTTP API request and returns the response. Abstracts away the HTTP error handling so
-	 * an implementation only needs to concern itself with the happy path.
+	 * Performs an HTTP API request and returns the WordPress HTTP API response.
 	 *
 	 * @param string $url The URL for the request.
 	 * @param array  $args The arguments to pass to `wp_remote_request()`.
-	 * @throws Exception Thrown if there is an error with the request or its response code is not 200.
-	 * @return string The response body.
+	 * @throws Exception Thrown if there is an error with the request.
+	 * @return array The WordPress HTTP API response.
 	 */
-	final public function remote_request( string $url, array $args ) : string {
+	final public function send_remote_request( string $url, array $args ) : array {
 		$response = wp_remote_request(
 			$url,
 			$args
@@ -186,6 +185,21 @@ abstract class Provider {
 				)
 			);
 		}
+
+		return $response;
+	}
+
+	/**
+	 * Performs an HTTP API request and returns the response. Abstracts away the HTTP error handling so
+	 * an implementation only needs to concern itself with the happy path.
+	 *
+	 * @param string $url The URL for the request.
+	 * @param array  $args The arguments to pass to `wp_remote_request()`.
+	 * @throws Exception Thrown if there is an error with the request or its response code is not 200.
+	 * @return string The response body.
+	 */
+	final public function remote_request( string $url, array $args ) : string {
+		$response = $this->send_remote_request( $url, $args );
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$response_message = wp_remote_retrieve_response_message( $response );
