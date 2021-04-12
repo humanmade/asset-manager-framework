@@ -181,7 +181,7 @@ abstract class Provider {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: Error message */
-					__( 'Error fetching media: %s', 'asset-manager-framework' ),
+					__( 'Media error: %s', 'asset-manager-framework' ),
 					$response->get_error_message()
 				)
 			);
@@ -201,7 +201,7 @@ abstract class Provider {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: Error message */
-					__( 'Error fetching media: %s', 'asset-manager-framework' ),
+					__( 'Media error: %s', 'asset-manager-framework' ),
 					$message
 				)
 			);
