@@ -281,18 +281,18 @@ function match_attachments_for_js( array $response, WP_Post $attachment ) : arra
 }
 
 function handle_upload( $_, $file ) {
-	global $amf_wordpress_upload;
+	global $amf_upload;
 
 	$provider = get_provider();
 
 	// Reset result of upload.
-	$amf_wordpress_upload = null;
+	$amf_upload = null;
 
 	try {
 		$upload = new FileUpload( $file );
 		$media = $provider->handle_upload( $upload );
 
-		$amf_wordpress_upload = [
+		$amf_upload = [
 			'file' => $upload->tmp_name,
 			'url' => $media->url,
 			'type' => $media->mime,
@@ -302,7 +302,7 @@ function handle_upload( $_, $file ) {
 		// new unwanted local post on shutdown.
 		add_action( 'add_attachment', __NAMESPACE__ . '\\remove_local_attachment' );
 	} catch ( Exception $e ) {
-		$amf_wordpress_upload = [
+		$amf_upload = [
 			'error' => $e->getMessage(),
 		];
 
@@ -320,10 +320,10 @@ function remove_local_attachment( int $post_id ) : void {
 }
 
 function handle_upload_response() : array {
-	global $amf_wordpress_upload;
+	global $amf_upload;
 
-	if ( $amf_wordpress_upload ) {
-		return $amf_wordpress_upload;
+	if ( $amf_upload ) {
+		return $amf_upload;
 	}
 
 	return [
