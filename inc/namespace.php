@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use WP_Error;
 use WP_Http;
 use WP_Post;
 use WP_Query;
@@ -28,6 +29,11 @@ function bootstrap() : void {
 
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+
+	// Handle uploads via the provider.
+	add_filter( 'pre_move_uploaded_file', __NAMESPACE__ . '\\handle_upload', 10, 2 );
+	add_filter( 'wp_handle_upload', __NAMESPACE__ . '\\handle_upload_response', 2 );
+	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\match_attachments_for_js', 1000, 2 );
 }
 
 function init() : void {
@@ -76,9 +82,8 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = get_provider()->supports_dynamic_image_resizing();
-
 	$attachments = [];
+	$provider = get_provider();
 
 	foreach ( $selected as $selection ) {
 		$attachment = get_attachment_by_id( $selection['id'] );
@@ -88,69 +93,98 @@ function ajax_select() : void {
 			continue;
 		}
 
-		$mime_type = $selection['mime'];
-
-		$args = [
-			'post_title' => $selection['title'],
-			'post_parent' => $post_id,
-			'post_name' => $selection['id'],
-			'post_content' => $selection['description'],
-			'post_excerpt' => $selection['caption'],
-			'post_mime_type' => $mime_type,
-			'guid' => $selection['url'],
-			'meta_input' => $selection['meta'],
-		];
-
-		$attachment_id = wp_insert_attachment( $args, false, 0, true );
-
-		if ( is_wp_error( $attachment_id ) ) {
-			wp_send_json_error( $attachment_id );
+		try {
+			$media = get_media_from_selection( $selection );
+			$attachment = insert_attachment( $media, $provider, $post_id );
+		} catch ( Exception $e ) {
+			wp_send_json_error( $e->getMessage() );
 		}
-
-		if ( ! empty( $selection['alt'] ) ) {
-			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
-		}
-
-		$metadata = wp_get_attachment_metadata( $attachment_id, true );
-		if ( ! is_array( $metadata ) ) {
-			$metadata = [];
-		}
-
-		$metadata['file'] = wp_slash( $selection['filename'] );
-
-		if ( ! empty( $selection['width'] ) ) {
-			$metadata['width'] = intval( $selection['width'] );
-		}
-
-		if ( ! empty( $selection['height'] ) ) {
-			$metadata['height'] = intval( $selection['height'] );
-		}
-
-		if ( ! empty( $selection['sizes'] ) && ! $supports_dynamic_image_resizing ) {
-			$metadata['sizes'] = array_map( function ( array $size ) use ( $mime_type ): array {
-
-				return [
-					'file' => $size['url'],
-					'width' => $size['width'],
-					'height' => $size['height'],
-					'mime-type' => $mime_type,
-				];
-			}, $selection['sizes'] );
-		}
-
-		wp_update_attachment_metadata( $attachment_id, $metadata );
-
-		$attachment = get_post( $attachment_id );
-		$meta = $selection['amfMeta'] ?? [];
-
-		unset( $selection['amfMeta'] );
-
-		do_action( 'amf/inserted_attachment', $attachment, $selection, $meta );
 
 		$attachments[ $selection['id'] ] = $attachment->ID;
 	}
 
 	wp_send_json_success( $attachments );
+}
+
+function get_media_from_selection( array $selection ) : Media {
+	$media = new Media( $selection['id'], $selection['mime'] );
+
+	foreach ( $selection as $key => $value ) {
+		$media->{ $key } = $value;
+	}
+
+	return $media;
+}
+
+function insert_attachment( Media $media, Provider $provider, int $parent = null ) : WP_Post {
+	global $amf_inserted;
+
+	if ( empty( $amf_inserted ) ) {
+		$amf_inserted = [];
+	}
+
+	$args = [
+		'post_title' => $media->title,
+		'post_parent' => $parent,
+		'post_name' => $media->id,
+		'post_content' => $media->description,
+		'post_excerpt' => $media->caption,
+		'post_mime_type' => $media->mime,
+		'guid' => $media->url,
+		'meta_input' => $media->meta,
+	];
+
+	$supports_dynamic_image_resizing = $provider->supports_dynamic_image_resizing();
+
+	$attachment_id = wp_insert_attachment( $args, false, 0, true );
+
+	if ( is_wp_error( $attachment_id ) ) {
+		throw new Exception( $attachment_id->get_error_message() );
+	}
+
+	if ( ! empty( $media->alt ) ) {
+		add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $media->alt ) );
+	}
+
+	$metadata = wp_get_attachment_metadata( $attachment_id, true );
+	if ( ! is_array( $metadata ) ) {
+		$metadata = [];
+	}
+
+	$metadata['file'] = wp_slash( $media->filename );
+
+	if ( ! empty( $media->width ) ) {
+		$metadata['width'] = intval( $media->width );
+	}
+
+	if ( ! empty( $media->height ) ) {
+		$metadata['height'] = intval( $media->height );
+	}
+
+	if ( ! empty( $media->sizes ) && ! $supports_dynamic_image_resizing ) {
+		$metadata['sizes'] = array_map( function( array $size ) use ( $args ) : array {
+			return [
+				'file' => $size['url'],
+				'width' => $size['width'],
+				'height' => $size['height'],
+				'mime-type' => $args['post_mime_type'],
+			];
+		}, $media->sizes );
+	}
+
+	wp_update_attachment_metadata( $attachment_id, $metadata );
+
+	$attachment = get_post( $attachment_id );
+	$meta = $media->amfMeta ?? [];
+
+	unset( $media->amfMeta );
+
+	do_action( 'amf/inserted_attachment', $attachment, $media, $meta );
+
+	// Track AMF attachments.
+	$amf_inserted[ $attachment->guid ] = $attachment;
+
+	return $attachment;
 }
 
 function replace_attached_file( $file, int $attachment_id ) : string {
@@ -218,4 +252,81 @@ function ajax_query_attachments() : void {
 	}
 
 	wp_send_json_success( $items->toArray() );
+}
+
+function match_attachments_for_js( array $response, WP_Post $attachment ) : array {
+	global $amf_inserted;
+
+	if ( empty( $amf_inserted[ $attachment->guid ] ) ) {
+		return new WP_Error( 'amf_error', __( 'Unable to prepare attachment response.', 'asset-manager-framework' ) );
+	}
+
+	if ( strpos( $attachment->post_name, 'amf-' ) === 0 ) {
+		// Correct the image sizes array to remove the duplicated base URL when a
+		// full URL is provided as the size file name.
+		if ( ! empty( $response['sizes'] ) ) {
+			$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+			foreach ( $response['sizes'] as $name => $size ) {
+				if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
+					continue;
+				}
+				$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+			}
+		}
+
+		return $response;
+	}
+
+	return wp_prepare_attachment_for_js( $amf_inserted[ $attachment->guid ] );
+}
+
+function handle_upload( $_, $file ) {
+	global $amf_upload;
+
+	$provider = get_provider();
+
+	// Reset result of upload.
+	$amf_upload = null;
+
+	try {
+		$upload = new FileUpload( $file );
+		$media = $provider->handle_upload( $upload );
+
+		$amf_upload = [
+			'file' => $upload->tmp_name,
+			'url' => $media->url,
+			'type' => $media->mime,
+		];
+
+		// Hook into the subsequent wp_insert_attachment() call to remove the
+		// new unwanted local post on shutdown.
+		add_action( 'add_attachment', __NAMESPACE__ . '\\remove_local_attachment' );
+	} catch ( Exception $e ) {
+		$amf_upload = [
+			'error' => $e->getMessage(),
+		];
+
+		return false;
+	}
+
+	return true;
+}
+
+function remove_local_attachment( int $post_id ) : void {
+	remove_action( 'add_attachment', __NAMESPACE__ . '\\remove_local_attachment' );
+	add_action( 'shutdown', function () use ( $post_id ) {
+		wp_delete_attachment( $post_id, true );
+	} );
+}
+
+function handle_upload_response() : array {
+	global $amf_upload;
+
+	if ( $amf_upload ) {
+		return $amf_upload;
+	}
+
+	return [
+		'error' => __( 'Could not upload to specified provider.', 'asset-manager-framework' ),
+	];
 }
