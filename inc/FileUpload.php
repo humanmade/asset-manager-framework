@@ -12,35 +12,35 @@ namespace AssetManagerFramework;
 class FileUpload {
 
 	/**
-	 * Undocumented variable
+	 * Uploaded file name.
 	 *
 	 * @var string
 	 */
 	public $name;
 
 	/**
-	 * Undocumented variable
+	 * File mime type.
 	 *
 	 * @var string
 	 */
 	public $type;
 
 	/**
-	 * Undocumented variable
+	 * File size in bytes.
 	 *
 	 * @var int
 	 */
 	public $size;
 
 	/**
-	 * Undocumented variable
+	 * Temporary file upload path.
 	 *
 	 * @var string
 	 */
 	public $tmp_name;
 
 	/**
-	 * Undocumented variable
+	 * File upload error code.
 	 *
 	 * @var int
 	 */

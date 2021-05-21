@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use WP_Error;
 use WP_Http;
 use WP_Post;
 use WP_Query;
@@ -29,7 +30,10 @@ function bootstrap() : void {
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
 
-	add_action( 'load-async-upload.php', __NAMESPACE__ . '\\handle_upload', 0 );
+	// Handle uploads via the provider.
+	add_filter( 'pre_move_uploaded_file', __NAMESPACE__ . '\\handle_upload', 10, 2 );
+	add_filter( 'wp_handle_upload', __NAMESPACE__ . '\\handle_upload_response', 2 );
+	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\match_attachments_for_js', 1000, 2 );
 }
 
 function init() : void {
@@ -113,6 +117,12 @@ function get_media_from_selection( array $selection ) : Media {
 }
 
 function insert_attachment( Media $media, Provider $provider, int $parent = null ) : WP_Post {
+	global $amf_inserted;
+
+	if ( empty( $amf_inserted ) ) {
+		$amf_inserted = [];
+	}
+
 	$args = [
 		'post_title' => $media->title,
 		'post_parent' => $parent,
@@ -170,6 +180,9 @@ function insert_attachment( Media $media, Provider $provider, int $parent = null
 	unset( $media->amfMeta );
 
 	do_action( 'amf/inserted_attachment', $attachment, $media, $meta );
+
+	// Track AMF attachments.
+	$amf_inserted[ $attachment->guid ] = $attachment;
 
 	return $attachment;
 }
@@ -241,48 +254,79 @@ function ajax_query_attachments() : void {
 	wp_send_json_success( $items->toArray() );
 }
 
-function handle_upload() : void {
-	header( 'Content-Type: text/plain; charset=' . get_option( 'blog_charset' ) );
+function match_attachments_for_js( array $response, WP_Post $attachment ) : array {
+	global $amf_inserted;
 
-	if ( isset( $_REQUEST['action'] ) && 'upload-attachment' === $_REQUEST['action'] ) {
-		send_nosniff_header();
-		nocache_headers();
-
-		check_admin_referer( 'media-form' );
-
-		$provider = get_provider();
-		$parent = null;
-
-		if ( isset( $_REQUEST['post_id'] ) ) {
-			$parent = absint( $_REQUEST['post_id'] );
-		}
-
-		try {
-			$file = new FileUpload( $_FILES['async-upload'] );
-			$data = $provider->handle_upload( $file, $parent );
-
-			echo wp_json_encode(
-				[
-					'success' => true,
-					'data' => $data,
-				]
-			);
-		} catch ( Exception $e ) {
-			display_upload_attachment_error( $e->getMessage(), $_FILES['async-upload']['name'] );
-		}
-
-		wp_die();
+	if ( empty( $amf_inserted[ $attachment->guid ] ) ) {
+		return new WP_Error( 'amf_error', __( 'Unable to prepare attachment response.', 'asset-manager-framework' ) );
 	}
+
+	if ( strpos( $attachment->post_name, 'amf-' ) === 0 ) {
+		// Correct the image sizes array to remove the duplicated base URL when a
+		// full URL is provided as the size file name.
+		if ( ! empty( $response['sizes'] ) ) {
+			$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+			foreach ( $response['sizes'] as $name => $size ) {
+				if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
+					continue;
+				}
+				$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+			}
+		}
+
+		return $response;
+	}
+
+	return wp_prepare_attachment_for_js( $amf_inserted[ $attachment->guid ] );
 }
 
-function display_upload_attachment_error( string $text, string $filename ) : void {
-	echo wp_json_encode(
-		[
-			'success' => false,
-			'data' => [
-				'message'  => esc_html( $text ),
-				'filename' => esc_html( $filename ),
-			],
-		]
-	);
+function handle_upload( $_, $file ) {
+	global $amf_wordpress_upload;
+
+	$provider = get_provider();
+
+	// Reset result of upload.
+	$amf_wordpress_upload = null;
+
+	try {
+		$upload = new FileUpload( $file );
+		$media = $provider->handle_upload( $upload );
+
+		$amf_wordpress_upload = [
+			'file' => $upload->tmp_name,
+			'url' => $media->url,
+			'type' => $media->mime,
+		];
+
+		// Hook into the subsequent wp_insert_attachment() call to remove the
+		// new unwanted local post on shutdown.
+		add_action( 'add_attachment', __NAMESPACE__ . '\\remove_local_attachment' );
+	} catch ( Exception $e ) {
+		$amf_wordpress_upload = [
+			'error' => $e->getMessage(),
+		];
+
+		return false;
+	}
+
+	return true;
+}
+
+function remove_local_attachment( int $post_id ) : void {
+	remove_action( 'add_attachment', __NAMESPACE__ . '\\remove_local_attachment' );
+	add_action( 'shutdown', function () use ( $post_id ) {
+		wp_delete_attachment( $post_id, true );
+	} );
+}
+
+function handle_upload_response() : array {
+	global $amf_wordpress_upload;
+
+	if ( $amf_wordpress_upload ) {
+		return $amf_wordpress_upload;
+	}
+
+	return [
+		'error' => __( 'Could not upload to specified provider.', 'asset-manager-framework' ),
+	];
 }

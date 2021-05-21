@@ -75,16 +75,24 @@ abstract class Provider {
 		return true;
 	}
 
-	final public function handle_upload( FileUpload $file, int $parent = null ) : Media {
+	final public function handle_upload( FileUpload $file ) : Media {
 		if ( ! $this->supports_asset_create() ) {
 			throw new Exception( __( 'Sorry, you are not allowed to upload files.', 'asset-manager-framework' ) );
 		}
 
-		if ( $parent && ! current_user_can( 'edit_post', $parent ) ) {
-			throw new Exception( __( 'Sorry, you are not allowed to attach files to this post.', 'asset-manager-framework' ) );
-		}
-
 		$media = $this->upload( $file );
+
+		// Determine attachment post parent ID if available.
+		$parent = null;
+		if ( isset( $_REQUEST['post_id'] ) ) {
+			$parent = absint( $_REQUEST['post_id'] );
+		}
+		if ( isset( $_REQUEST['post'] ) ) {
+			$parent = absint( $_REQUEST['post'] );
+		}
+		if ( ! get_post( $parent ) || ! current_user_can( 'edit_post', $parent ) ) {
+			$parent = null;
+		}
 
 		$media->id = insert_attachment( $media, $this, $parent )->ID;
 
@@ -225,7 +233,7 @@ abstract class Provider {
 		$response_message = wp_remote_retrieve_response_message( $response );
 		$response_body = wp_remote_retrieve_body( $response );
 
-		if ( 200 !== $response_code ) {
+		if ( $response_code < 200 || $response_code > 299 ) {
 			$message = sprintf(
 				'%1$s: %2$s',
 				$response_code,
