@@ -1,80 +1,82 @@
 # Asset Manager Framework
 
-This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider, such as a DAM.
+This WordPress plugin provides a framework for replacing the contents of the standard WordPress media library with assets from an external provider such as a DAM, another WordPress website, or a central site within a Multisite installation.
 
-It handles the necessary integration with WordPress (Ajax endpoints, REST API endpoints, and Backbone components), leaving you to only focus on the connection to your DAM.
+It handles the necessary integration with WordPress (Ajax endpoints and Backbone components) leaving you to focus on just the server-side API connection to your DAM.
 
-The intention is that the media manager, the block editor, the classic editor, media endpoints of the REST API, and anything that calls `wp.media()` should "just work" and not need to implement any changes in order to support a media library that is powered by an external provider.
+The intention is that the media manager, the block editor, the classic editor, the REST API, XML-RPC, and anything that calls `wp.media()` should "just work" and not need to implement changes in order to support a media library that is powered by an external provider.
+
+## Installation
+
+Install with [Composer](https://getcomposer.org):
+
+```sh
+composer require humanmade/asset-manager-framework
+```
 
 ## Status
 
-Current status: **MVP.** This is not yet ready for production use.
+Current status: **Alpha.** Generally very functional but several features still in development.
 
 The following features work as expected:
 
-* [X] Block editor: Image block (including its derivatives such as Cover, Media & Text, Inline image)
-* [X] Block editor: Gallery block
-* [X] Block editor: Video block
-* [X] Block editor: Audio block
-* [X] Block editor: File block
-* [X] Block editor: Featured image
-* [X] Classic editor: Images and image galleries
-* [X] Classic editor: Videos and video playlists
-* [X] Classic editor: Audio and audio playlists
-* [X] Classic editor: Featured image
-* [X] Classic editor: Other file types
-* [X] Media screen: List mode
-* [X] Media screen: Grid mode
-* [X] Media screen: Grid attachment details
-* [X] Attachment editing screen
+* [X] Block editor: All media features
+* [X] Classic editor: All media features
+* [X] Media screen: All features
+* [X] Widgets: All media widgets
+* [ ] Customizer:
+    - [X] Background Image
+    - [ ] Logo (functions if you skip cropping)
+    - [ ] Site Icon (unable to skip cropping of large images)
+* [X] REST API media endpoints
+* [X] XML-RPC requests for media
+* [X] Any code that calls `wp.media()` to open the media manager and work with the selected attachments
 
-The following plugins have been tested and are known to be compatible:
+The following custom field libraries have been tested and are compatible out of the box:
 
 * [X] CMB2
 * [X] Advanced Custom Fields (ACF)
 * [X] Fieldmanager
 
-The following features *should* work but have yet to be completely tested:
+The following third party plugins are supported via an included integration layer:
 
-* [ ] Mostly any code that calls `wp.media()` to open the media manager and work with the resulting selected attachment
-* [ ] Default REST API `/media` endpoints
-* [ ] Default XML-RPC requests for media
-
-The following features are not yet supported:
-
-* [ ] Deep linking to the media screen grid attachment details
-* [ ] Setting the featured image for a non-image media item automatically, when one is available (eg. video poster)
-* [ ] Responsive image srcsets on images within post content
+* [X] MultilingualPress 3
 
 The following new features are planned but not yet implemented:
 
-* [ ] Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)
+* [ ] [Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)](https://github.com/humanmade/asset-manager-framework/issues/13)
+* [ ] Support for multiple simultaneous media providers
 
 The following features will *not* be supported:
 
 * Side-loading media from an external media provider. The intention of this framework is that media files remain remotely hosted.
-* Built-in handling of authentication that may be required to communicate with your external media provider. This responsibility lies within your implementation.
-* Built-in support for any given media provider (such as Resource Space, AEM, or Bynder). This is a framework built to be extended in order to connect it to a media provider.
+* Built-in handling of authentication required to communicate with your external media provider. This responsibility lies within your implementation. Consider using [the Keyring plugin](https://wordpress.org/plugins/keyring/) if an OAuth connection is required.
+* Built-in support for any given media provider (such as AEM Assets, Aprimo, Bynder, or ResourceSpace). This is a framework built to be extended in order to connect it to a media provider.
+
+## Known Implementations
+
+* [AMF WordPress](https://github.com/humanmade/amf-wordpress/) for using another WordPress site, or another site on a Multisite network, as source for your media library.
+* [AMF Unsplash](https://github.com/humanmade/amf-unsplash/) for using Unsplash as a source.
 
 ## Implementation
 
-There are two main parts to the way this plugin works.
+There are two main aspects to the plugin.
 
-1. Allowing the media manager grid to display external items which are not existing attachments.
-2. Subsequently creating a local attachment for an external item when it's selected for use.
+1. Allow the media manager grid to display external items which are not existing attachments.
+2. Subsequently create a local attachment for an external item when it's selected for use.
 
 The design decision behind this is that allowing for external items to be browsed in the media manager is quite straight forward, but unless each item is associated with a local attachment then most of the rest of WordPress breaks when you go to use an item. Previous attempts to do this have involved lying about attachment IDs, or switching to another site on a Multisite network to provide a media item. Neither approach is desirable because such lies need to be maintained and eventually you run into a situation where your lies become unravelled.
 
 Asset Manager Framework instead allows external media items to be browsed in the media library grid, but as soon as an item is selected for use (eg. to be inserted into a post or used as a featured image), an attachment is created for the media item, and this gets returned by the media manager.
 
-The actual media file does not get sideloaded into WordPress - it intentionally remains at its external URL. The attachment object refers to the correct external URL as necessary, while maintaining a local attachment that can be referenced, queried, etc.
+The actual media file does not get sideloaded into WordPress - it intentionally remains at its external URL. The correct external URL gets referred to as necessary, while a local object attachment is maintained that can be referenced and queried within WordPress.
 
 ## Integration
 
 There are two steps needed to integrate a media provider using the Asset Manager Framework:
 
 1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `request()` method to fetch results from your external media provider based on query arguments from the media manager.
-2. Hook into the `amf/provider_class` filter to register your provider for use.
+2. Hook into the `amf/provider` filter to register your provider for use.
 
 Full documentation is coming soon, but for now here's an example of a provider which supplies images from placekitten.com:
 
@@ -82,7 +84,7 @@ Full documentation is coming soon, but for now here's an example of a provider w
 use AssetManagerFramework\{
 	Provider,
 	MediaList,
-	Image,
+	Image
 };
 
 class KittenProvider extends Provider {
@@ -113,14 +115,24 @@ class KittenProvider extends Provider {
 
 }
 
-add_filter( 'amf/provider_class', function() {
-	return 'KittenProvider';
+add_filter( 'amf/provider', function () {
+	return new KittenProvider();
 } );
 ```
 
 Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
+
+Since you have access to the current provider instance via the `amf/provider`, you could also use it and decorate it:
+
+```php
+add_filter( 'amf/provider', function ( Provider $provider ) {
+	return new DecoratingProvider( $provider );
+}, 20 );
+```
+
+This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior. Remember to use a priority later than the default for this filter, for example 20, so your code runs after the default filter.
 
 # License: GPLv2 #
 

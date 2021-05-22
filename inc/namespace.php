@@ -10,13 +10,14 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use WP_Http;
 use WP_Post;
 use WP_Query;
 
 function bootstrap() : void {
 	add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
-	add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
-	add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'admin_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
 
 	// Replace the default wp_ajax_query_attachments handler with our own.
 	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
@@ -30,15 +31,11 @@ function bootstrap() : void {
 }
 
 function init() : void {
-	require_once __DIR__ . '/Provider.php';
-	require_once __DIR__ . '/BlankProvider.php';
-	require_once __DIR__ . '/Media.php';
-	require_once __DIR__ . '/Playable.php';
-	require_once __DIR__ . '/Image.php';
-	require_once __DIR__ . '/Audio.php';
-	require_once __DIR__ . '/Video.php';
-	require_once __DIR__ . '/Document.php';
-	require_once __DIR__ . '/MediaList.php';
+	// Load the integration layer for MLP if it's active
+	if ( class_exists( 'Inpsyde\MultilingualPress\MultilingualPress', false ) ) {
+		require_once __DIR__ . '/integrations/multilingualpress/namespace.php';
+		Integrations\MultilingualPress\bootstrap();
+	}
 
 	do_action( 'amf/loaded' );
 }
@@ -84,9 +81,15 @@ function ajax_select() : void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$post_id = intval( $_REQUEST['post'] ?? 0 );
 
-	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+	if ( ! current_user_can( 'upload_files' ) ) {
 		wp_send_json_error();
 	}
+
+	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_send_json_error();
+	}
+
+	$supports_dynamic_image_resizing = get_provider()->supports_dynamic_image_resizing();
 
 	$attachments = [];
 
@@ -98,14 +101,17 @@ function ajax_select() : void {
 			continue;
 		}
 
+		$mime_type = $selection['mime'];
+
 		$args = [
 			'post_title' => $selection['title'],
 			'post_parent' => $post_id,
 			'post_name' => $selection['id'],
 			'post_content' => $selection['description'],
 			'post_excerpt' => $selection['caption'],
-			'post_mime_type' => $selection['mime'],
+			'post_mime_type' => $mime_type,
 			'guid' => $selection['url'],
+			'meta_input' => $selection['meta'],
 		];
 
 		$attachment_id = wp_insert_attachment( $args, false, 0, true );
@@ -118,9 +124,12 @@ function ajax_select() : void {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
 
-		$metadata = [
-			'file' => wp_slash( $selection['filename'] ),
-		];
+		$metadata = wp_get_attachment_metadata( $attachment_id, true );
+		if ( ! is_array( $metadata ) ) {
+			$metadata = [];
+		}
+
+		$metadata['file'] = wp_slash( $selection['filename'] );
 
 		if ( ! empty( $selection['width'] ) ) {
 			$metadata['width'] = intval( $selection['width'] );
@@ -128,6 +137,17 @@ function ajax_select() : void {
 
 		if ( ! empty( $selection['height'] ) ) {
 			$metadata['height'] = intval( $selection['height'] );
+		}
+
+		if ( ! empty( $selection['sizes'] ) && ! $supports_dynamic_image_resizing ) {
+			$metadata['sizes'] = array_map( function ( array $size ) use ( $mime_type ): array {
+				return [
+					'file' => $size['url'],
+					'width' => $size['width'],
+					'height' => $size['height'],
+					'mime-type' => $mime_type,
+				];
+			}, $selection['sizes'] );
 		}
 
 		wp_update_attachment_metadata( $attachment_id, $metadata );
@@ -146,7 +166,7 @@ function ajax_select() : void {
 }
 
 function replace_attached_file( $file, int $attachment_id ) : string {
-	$metadata = wp_get_attachment_metadata( $attachment_id );
+	$metadata = wp_get_attachment_metadata( $attachment_id, true );
 
 	return $metadata['file'] ?? '';
 }
@@ -233,7 +253,8 @@ function ajax_query_attachments() : void {
 					'code' => $e->getCode(),
 					'message' => $e->getMessage(),
 				],
-			]
+			],
+			WP_Http::INTERNAL_SERVER_ERROR
 		);
 	}
 

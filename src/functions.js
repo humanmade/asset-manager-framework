@@ -1,12 +1,23 @@
 
+/**
+ * @param {wp.media.view.Toolbar} toolbar
+ * @param {string} selector
+ * @return {wp.media.view.Toolbar}
+ */
 export function extend_toolbar( toolbar, selector ) {
 	return toolbar.extend( {
+		/**
+		 * @param {string|Object} id
+		 * @param {Backbone.View|Object} view
+		 * @param {Object} [options={}]
+		 * @return {wp.media.view.Toolbar} Returns itself to allow chaining.
+		 */
 		set: function( id, view, options ) {
 			if ( selector === id ) {
 				view.click = get_click_handler( view );
 			}
 
-			return toolbar.prototype.set.apply( this, [ id, view, options ] );
+			return toolbar.prototype.set.apply( this, arguments );
 		}
 	} );
 }
@@ -43,7 +54,13 @@ export function get_click_handler( item ) {
 
 			click_handler();
 		} ).fail( response => {
-			alert( response[0].message ?? __( 'An unknown error occurred.', 'asset-manager-framework' ) );
+			let message = ( 'An unknown error occurred.' );
+
+			if ( response && response[0] && response[0].message ) {
+				message = response[0].message;
+			}
+
+			alert( message );
 
 			event.target.disabled = false;
 		} );

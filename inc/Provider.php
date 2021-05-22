@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 use Exception;
+use RangeException;
 use WP_Query;
 
 abstract class Provider {
@@ -24,17 +25,17 @@ abstract class Provider {
 	 * process the results, and return a Media collection.
 	 *
 	 * @param array $args {
-	 *      Arguments for the request for media items, typically coming directly from the media manager filters.
+	 *     Arguments for the request for media items, typically coming directly from the media manager filters.
 	 *
-	 *      @type int      $paged          The page number of the results.
-	 *      @type int      $posts_per_page Optional. Maximum number of results to return.
-	 *      @type string   $s              Optional. The search query.
-	 *      @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
-	 *      @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
-	 *      @type string   $order          Optional. Order. 'DESC' (for 'date') or 'ASC' (for 'menu_order ID').
-	 *      @type int      $author         Optional. User ID of author to restrict results to.
-	 *      @type int      $year           Optional. Four digit year number if results are filtered by date.
-	 *      @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
+	 *     @type int      $paged          The page number of the results.
+	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40.
+	 *     @type string   $s              Optional. The search query.
+	 *     @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
+	 *     @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
+	 *     @type string   $order          Optional. Order. 'DESC' (for 'date') or 'ASC' (for 'menu_order ID').
+	 *     @type int      $author         Optional. User ID if results are filtered by author.
+	 *     @type int      $year           Optional. Four digit year number if results are filtered by date.
+	 *     @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
 	 * }
 	 * @throws Exception Thrown if an unrecoverable error occurs.
 	 * @return MediaList The collection of Media items. Can be an empty collection if there are no matching results.
@@ -57,6 +58,10 @@ abstract class Provider {
 		return false;
 	}
 
+	public function supports_dynamic_image_resizing() : bool {
+		return false;
+	}
+
 	public function supports_filter_search() : bool {
 		return true;
 	}
@@ -73,6 +78,13 @@ abstract class Provider {
 		return true;
 	}
 
+	/**
+	 * Fetches a list of media items that are ultimately used directly by the media managaer.
+	 *
+	 * @param array $args Raw query arguments from the POST request in the media manager.
+	 * @throws RangeException Thrown if the provider returns too many media items.
+	 * @return MediaList Media items for use in the media manager.
+	 */
 	final public function request_items( array $args ) : MediaList {
 		if ( isset( $args['post_parent'] ) ) {
 			// @TODO
@@ -123,6 +135,16 @@ abstract class Provider {
 			return $items;
 		}
 
+		if ( isset( $args['posts_per_page'] ) && ( $args['posts_per_page'] > 0 ) && count( $array ) > $args['posts_per_page'] ) {
+			throw new RangeException(
+				sprintf(
+					/* translators: %s: Argument name */
+					__( 'Too many media items were returned by the provider. The "%s" argument must be respected.', 'asset-manager-framework' ),
+					'posts_per_page'
+				)
+			);
+		}
+
 		$names = array_column( $array, 'id' );
 		$query = [
 			'post_type' => 'attachment',
@@ -143,6 +165,15 @@ abstract class Provider {
 		return $items;
 	}
 
+	/**
+	 * Performs an HTTP API request and returns the response. Abstracts away the HTTP error handling so
+	 * an implementation only needs to concern itself with the happy path.
+	 *
+	 * @param string $url The URL for the request.
+	 * @param array  $args The arguments to pass to `wp_remote_request()`.
+	 * @throws Exception Thrown if there is an error with the request or its response code is not 200.
+	 * @return string The response body.
+	 */
 	final public function remote_request( string $url, array $args ) : string {
 		$response = wp_remote_request(
 			$url,

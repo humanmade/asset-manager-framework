@@ -17,6 +17,8 @@ class Media {
 	public $amfMeta = [];
 	public $attachmentExists = false;
 	public $author = 0;
+	public $authorLink = '';
+	public $authorName = '';
 	public $caption = '';
 	public $date = null;
 	public $dateFormatted = null;
@@ -28,9 +30,10 @@ class Media {
 	public $height = null;
 	public $icon = '';
 	public $id = '';
+	public $image = null;
 	public $link = '';
 	public $menuOrder = 0;
-	public $meta = false;
+	public $meta = [];
 	public $mime = '';
 	public $modified = null;
 	public $name = '';
@@ -71,6 +74,16 @@ class Media {
 
 	final public function set_filename( string $filename ) : self {
 		$this->filename = $filename;
+
+		return $this;
+	}
+
+	final public function set_image( string $image ) : self {
+		$this->image = [
+			'src' => esc_url_raw( $image ),
+			'width' => 400,
+			'height' => 400,
+		];
 
 		return $this;
 	}
@@ -139,6 +152,25 @@ class Media {
 
 	final public function set_sizes( array $sizes ) : self {
 		$this->sizes = $sizes;
+
+		return $this;
+	}
+
+	final public function set_author( string $author_name, string $author_link = '' ) : self {
+		$this->authorName = $author_name;
+		$this->authorLink = esc_url_raw( $author_link );
+
+		return $this;
+	}
+
+	final public function add_meta( string $key, $value ) : self {
+		$this->meta[ $key ] = $value;
+
+		return $this;
+	}
+
+	final public function set_meta( array $meta ) : self {
+		$this->meta = $meta;
 
 		return $this;
 	}
