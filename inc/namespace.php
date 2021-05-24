@@ -65,7 +65,7 @@ function enqueue_scripts() : void {
 
 function get_script_data() : array {
 	$providers = array_reduce( get_providers(), function( array $carry, Provider $provider ) : array {
-		$carry[ $provider::$id ] = $provider::$name;
+		$carry[ $provider->id ] = $provider->name;
 		return $carry;
 	}, [] );
 
@@ -75,6 +75,13 @@ function get_script_data() : array {
 }
 
 function ajax_select() : void {
+
+	$provider = get_provider( $_REQUEST['provider'] ?? null );
+
+	if ( empty( $provider ) ) {
+		wp_send_json_error( [ 'message' => 'Provider not found.' ] );
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$selected = isset( $_REQUEST['selection'] ) ? wp_unslash( (array) $_REQUEST['selection'] ) : [];
 
@@ -89,7 +96,7 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = get_provider()->supports_dynamic_image_resizing();
+	$supports_dynamic_image_resizing = $provider->supports_dynamic_image_resizing();
 
 	$attachments = [];
 
@@ -188,23 +195,29 @@ function get_attachment_by_id( string $id ) :? WP_Post {
 	return $query->next_post();
 }
 
+function allow_local_media() : bool {
+	return apply_filters( 'amf/allow_local_media', true );
+}
+
 function get_providers() : array {
-	static $providers = null;
+	return apply_filters( 'amf/providers', [] );
+}
 
-	if ( $providers !== null ) {
-		return $providers;
+function get_provider( ?string $id = null ) : ?Provider {
+	$providers = get_providers();
+	$provider = null;
+
+	if ( ! allow_local_media() ) {
+		$provider = new BlankProvider();
 	}
 
-	$provider_classes = apply_filters( 'amf/provider_classes', [
-		__NAMESPACE__ . '\BlankProvider'
-	] );
-
-	$providers = [];
-	foreach ( $provider_classes as $provider_class ) {
-		$providers[ $provider_class::$id ] = new $provider_class();
+	foreach ( $providers as $instance ) {
+		if ( $instance->id === $id ) {
+			$provider = $instance;
+		}
 	}
 
-	return $providers;
+	return apply_filters( 'amf/provider', $provider, $id );
 }
 
 function ajax_query_attachments() : void {
@@ -222,27 +235,17 @@ function ajax_query_attachments() : void {
 		wp_send_json_error();
 	}
 
-	if ( ! isset( $args['provider'] ) ) {
-		if ( ! apply_filters( 'amf/allow_empty_provider', true ) ) {
-			wp_send_json_error( [ 'message' => 'Missing provider ID.' ] );
-		}
-		$provider_id = '';
-	} else {
-		$provider_id = $args['provider'];
-	}
+	$provider = get_provider( $args['provider'] ?? null );
 
-	$providers = get_providers();
-
-	if ( ! isset( $providers[ $provider_id ] ) ) {
+	if ( ! allow_local_media() && empty( $provider ) ) {
 		wp_send_json_error( [ 'message' => 'Provider not found.' ] );
 	}
 
-	// Short circuit for local media provider
-	if ( empty( $provider_id ) ) {
+	// Short circuit for local media provider.
+	if ( empty( $provider ) ) {
+		wp_ajax_query_attachments();
 		return;
 	}
-
-	$provider = $providers[ $provider_id ];
 
 	try {
 		$items = $provider->request_items( $args );
