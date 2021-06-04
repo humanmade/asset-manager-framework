@@ -90,7 +90,7 @@
 /*!**************************!*\
   !*** ./src/functions.js ***!
   \**************************/
-/*! exports provided: extend_toolbar, get_click_handler, addProviderFilter, addInlineStyle */
+/*! exports provided: extend_toolbar, get_click_handler, addProviderFilter, addInlineStyle, toggleUI */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -99,6 +99,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "get_click_handler", function() { return get_click_handler; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addProviderFilter", function() { return addProviderFilter; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addInlineStyle", function() { return addInlineStyle; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toggleUI", function() { return toggleUI; });
 /**
  * @param {wp.media.view.Toolbar} toolbar
  * @param {string} selector
@@ -126,7 +127,6 @@ function get_click_handler(item) {
   var attribute = item.requires.library ? 'library' : 'selection';
   return function (event) {
     var selection_state = this.controller.state().get(attribute);
-    var provider = this.controller.state().get('library').props.get('provider');
     var new_attachments = selection_state.models.filter(function (model) {
       return !model.attributes.attachmentExists;
     });
@@ -135,10 +135,18 @@ function get_click_handler(item) {
     if (!new_attachments.length) {
       click_handler();
       return;
+    } // Get the current provider.
+
+
+    var provider = this.controller.state().get('library').props.get('provider');
+
+    if (!provider && Object.keys(AMF_DATA.providers).length > 0) {
+      provider = Object.keys(AMF_DATA.providers)[0];
     } // Short circuit for local media provider.
 
 
     if (provider === 'local') {
+      click_handler();
       return;
     }
 
@@ -169,10 +177,13 @@ function addProviderFilter() {
   // Short circuit if we don't have providers
   if (!AMF_DATA || !AMF_DATA.hasOwnProperty('providers')) {
     return;
-  } // If we have only 1 filter then it's the default, no need for a filter.
+  }
 
+  addInlineStyle("\n\t\t.amf-hidden { display: none !important; }\n\t"); // If we have only 1 filter then it's the default, no need for a filter.
 
   if (Object.keys(AMF_DATA.providers).length < 2) {
+    var provider = Object.values(AMF_DATA.providers)[0];
+    toggleUI(provider.supports);
     return;
   } // Override core styles that allow only two filter inputs
 
@@ -210,7 +221,11 @@ function addProviderFilter() {
         }
       });
 
-      this.$el.val(value);
+      this.$el.val(value); // Show / hide components based on provider capabilities.
+
+      if (props.provider) {
+        toggleUI(AMF_DATA.providers[props.provider].supports);
+      }
     }
   }); // Extend and override wp.media.view.AttachmentsBrowser to include our new filter
 
@@ -239,6 +254,12 @@ function addInlineStyle(styles) {
 
   document.getElementsByTagName('head')[0].appendChild(css);
 }
+function toggleUI(supports) {
+  jQuery('a[href*="/media-new.php"],.uploader-inline').toggleClass('amf-hidden', !supports.create);
+  jQuery('.media-button.delete-selected-button').toggleClass('amf-hidden', !supports.delete);
+  jQuery('#media-attachment-date-filters').toggleClass('amf-hidden', !supports.filterDate);
+  jQuery('#media-attachment-filters').toggleClass('amf-hidden', !supports.filterType);
+}
 
 /***/ }),
 
@@ -259,7 +280,9 @@ __webpack_require__.r(__webpack_exports__);
 
 (function () {
   wp.media.view.Toolbar = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar, 'insert');
-  wp.media.view.Toolbar.Select = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar.Select, 'select');
+  wp.media.view.Toolbar.Select = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar.Select, 'select'); // Support for Smart Media.
+
+  wp.media.view.Toolbar = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar, 'apply');
   Object(_functions__WEBPACK_IMPORTED_MODULE_0__["addProviderFilter"])();
 })();
 

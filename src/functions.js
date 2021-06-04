@@ -28,7 +28,6 @@ export function get_click_handler( item ) {
 
 	return function( event ) {
 		const selection_state = this.controller.state().get( attribute );
-		const provider = this.controller.state().get( 'library' ).props.get( 'provider' );
 		const new_attachments = selection_state.models.filter(model => ! model.attributes.attachmentExists);
 
 		click_handler = _.bind( click_handler, this );
@@ -38,8 +37,15 @@ export function get_click_handler( item ) {
 			return;
 		}
 
+		// Get the current provider.
+		let provider = this.controller.state().get( 'library' ).props.get( 'provider' );
+		if ( ! provider && Object.keys( AMF_DATA.providers ).length > 0 ) {
+			provider = Object.keys( AMF_DATA.providers )[0];
+		}
+
 		// Short circuit for local media provider.
 		if ( provider === 'local' ) {
+			click_handler();
 			return;
 		}
 
@@ -80,8 +86,14 @@ export function addProviderFilter() {
 		return;
 	}
 
+	addInlineStyle( `
+		.amf-hidden { display: none !important; }
+	` );
+
 	// If we have only 1 filter then it's the default, no need for a filter.
 	if ( Object.keys( AMF_DATA.providers ).length < 2 ) {
+		const provider = Object.values( AMF_DATA.providers )[0];
+		toggleUI( provider.supports );
 		return;
 	}
 
@@ -126,6 +138,11 @@ export function addProviderFilter() {
 			});
 
 			this.$el.val( value );
+
+			// Show / hide components based on provider capabilities.
+			if ( props.provider ) {
+				toggleUI( AMF_DATA.providers[ props.provider ].supports );
+			}
 		}
 	});
 
@@ -155,4 +172,11 @@ export function addInlineStyle( styles ) {
 	}
 
 	document.getElementsByTagName( 'head' )[0].appendChild( css );
+}
+
+export function toggleUI( supports ) {
+	jQuery( 'a[href*="/media-new.php"],.uploader-inline' ).toggleClass( 'amf-hidden', ! supports.create );
+	jQuery( '.media-button.delete-selected-button' ).toggleClass( 'amf-hidden', ! supports.delete );
+	jQuery( '#media-attachment-date-filters' ).toggleClass( 'amf-hidden', ! supports.filterDate );
+	jQuery( '#media-attachment-filters' ).toggleClass( 'amf-hidden', ! supports.filterType );
 }
