@@ -1,1 +1,269 @@
-!function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}r.m=e,r.c=t,r.d=function(e,t,n){r.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.t=function(e,t){if(1&t&&(e=r(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var i in e)r.d(n,i,function(t){return e[t]}.bind(null,i));return n},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=0)}([function(e,t,r){"use strict";function n(e,t){return e.extend({set:function(r,n,o){return t===r&&(n.click=i(n)),e.prototype.set.apply(this,arguments)}})}function i(e){var t=e.click,r=e.requires.library?"library":"selection";return function(e){var n=this.controller.state().get(r),i=n.models.filter((function(e){return!e.attributes.attachmentExists}));t=_.bind(t,this),i.length?(e.target.disabled=!0,wp.ajax.post("amf-select",{selection:n.toJSON(),post:wp.media.view.settings.post.id}).done((function(r){Object.keys(r).forEach((function(e){n.get(e).set("id",r[e])})),e.target.disabled=!1,t()})).fail((function(t){var r="An unknown error occurred.";t&&t[0]&&t[0].message&&(r=t[0].message),alert(r),e.target.disabled=!1}))):t()}}function o(){if(AMF_DATA&&AMF_DATA.hasOwnProperty("providers")){!function(e){var t=document.createElement("style");t.type="text/css",t.styleSheet?t.styleSheet.cssText=e:t.appendChild(document.createTextNode(e));document.getElementsByTagName("head")[0].appendChild(t)}(".media-modal-content .media-frame select.attachment-filters { width: 150px }");var e=wp.media.view.AttachmentFilters.extend({id:"media-attachment-provider-filter",createFilters:function(){var e={};_.each(AMF_DATA.providers||{},(function(t,r){e[r]={text:t,props:{provider:r}}})),this.filters=e}}),t=wp.media.view.AttachmentsBrowser;wp.media.view.AttachmentsBrowser=wp.media.view.AttachmentsBrowser.extend({createToolbar:function(){t.prototype.createToolbar.call(this),this.toolbar.set("MediaLibraryProviderFilter",new e({controller:this.controller,model:this.collection.props,priority:-75}).render())}})}}r.r(t),wp.media.view.Toolbar=n(wp.media.view.Toolbar,"insert"),wp.media.view.Toolbar.Select=n(wp.media.view.Toolbar.Select,"select"),o()}]);
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./src/functions.js":
+/*!**************************!*\
+  !*** ./src/functions.js ***!
+  \**************************/
+/*! exports provided: extend_toolbar, get_click_handler, addProviderFilter, addInlineStyle */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "extend_toolbar", function() { return extend_toolbar; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "get_click_handler", function() { return get_click_handler; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addProviderFilter", function() { return addProviderFilter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addInlineStyle", function() { return addInlineStyle; });
+/**
+ * @param {wp.media.view.Toolbar} toolbar
+ * @param {string} selector
+ * @return {wp.media.view.Toolbar}
+ */
+function extend_toolbar(toolbar, selector) {
+  return toolbar.extend({
+    /**
+     * @param {string|Object} id
+     * @param {Backbone.View|Object} view
+     * @param {Object} [options={}]
+     * @return {wp.media.view.Toolbar} Returns itself to allow chaining.
+     */
+    set: function set(id, view, options) {
+      if (selector === id) {
+        view.click = get_click_handler(view);
+      }
+
+      return toolbar.prototype.set.apply(this, arguments);
+    }
+  });
+}
+function get_click_handler(item) {
+  var click_handler = item.click;
+  var attribute = item.requires.library ? 'library' : 'selection';
+  return function (event) {
+    var selection_state = this.controller.state().get(attribute);
+    var provider = this.controller.state().get('library').props.get('provider');
+    var new_attachments = selection_state.models.filter(function (model) {
+      return !model.attributes.attachmentExists;
+    });
+    click_handler = _.bind(click_handler, this);
+
+    if (!new_attachments.length) {
+      click_handler();
+      return;
+    } // Short circuit for local media provider.
+
+
+    if (provider === 'local') {
+      return;
+    }
+
+    event.target.disabled = true;
+    wp.ajax.post('amf-select', {
+      selection: selection_state.toJSON(),
+      post: wp.media.view.settings.post.id,
+      provider: provider
+    }).done(function (response) {
+      Object.keys(response).forEach(function (key) {
+        selection_state.get(key).set('id', response[key]);
+      });
+      event.target.disabled = false;
+      click_handler();
+    }).fail(function (response) {
+      var message = 'An unknown error occurred.';
+
+      if (response && response[0] && response[0].message) {
+        message = response[0].message;
+      }
+
+      alert(message);
+      event.target.disabled = false;
+    });
+  };
+}
+function addProviderFilter() {
+  // Short circuit if we don't have providers
+  if (!AMF_DATA || !AMF_DATA.hasOwnProperty('providers')) {
+    return;
+  } // If we have only 1 filter then it's the default, no need for a filter.
+
+
+  if (Object.keys(AMF_DATA.providers).length < 2) {
+    return;
+  } // Override core styles that allow only two filter inputs
+
+
+  addInlineStyle("\n\t\t.media-modal-content .media-frame select.attachment-filters { width: 150px }\n\t\t.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 15px; }\n\t"); // Create a new MediaLibraryProviderFilter we later will instantiate
+
+  var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend({
+    id: 'media-attachment-provider-filter',
+    createFilters: function createFilters() {
+      var filters = {}; // Formats the 'providers' we've included via wp_localize_script()
+
+      _.each(AMF_DATA.providers || {}, function (value, index) {
+        filters[index] = {
+          text: value.name,
+          props: {
+            provider: index
+          }
+        };
+      });
+
+      this.filters = filters;
+    },
+    select: function select() {
+      var model = this.model,
+          value = Object.keys(AMF_DATA.providers)[0],
+          props = model.toJSON();
+
+      _.find(this.filters, function (filter, id) {
+        var equal = _.all(filter.props, function (prop, key) {
+          return prop === (_.isUndefined(props[key]) ? null : props[key]);
+        });
+
+        if (equal) {
+          return value = id;
+        }
+      });
+
+      this.$el.val(value);
+    }
+  }); // Extend and override wp.media.view.AttachmentsBrowser to include our new filter
+
+  var AttachmentsBrowser = wp.media.view.AttachmentsBrowser;
+  wp.media.view.AttachmentsBrowser = wp.media.view.AttachmentsBrowser.extend({
+    createToolbar: function createToolbar() {
+      // Make sure to load the original toolbar
+      AttachmentsBrowser.prototype.createToolbar.call(this);
+      this.toolbar.set('MediaLibraryProviderFilter', new MediaLibraryProviderFilter({
+        controller: this.controller,
+        model: this.collection.props,
+        priority: -75
+      }).render());
+    }
+  });
+}
+function addInlineStyle(styles) {
+  var css = document.createElement('style');
+  css.type = 'text/css';
+
+  if (css.styleSheet) {
+    css.styleSheet.cssText = styles;
+  } else {
+    css.appendChild(document.createTextNode(styles));
+  }
+
+  document.getElementsByTagName('head')[0].appendChild(css);
+}
+
+/***/ }),
+
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _functions__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./functions */ "./src/functions.js");
+/**
+ * Overrides for the wp.media library.
+ */
+
+
+(function () {
+  wp.media.view.Toolbar = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar, 'insert');
+  wp.media.view.Toolbar.Select = Object(_functions__WEBPACK_IMPORTED_MODULE_0__["extend_toolbar"])(wp.media.view.Toolbar.Select, 'select');
+  Object(_functions__WEBPACK_IMPORTED_MODULE_0__["addProviderFilter"])();
+})();
+
+/***/ })
+
+/******/ });
+//# sourceMappingURL=index.js.map

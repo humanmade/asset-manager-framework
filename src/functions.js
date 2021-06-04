@@ -28,6 +28,7 @@ export function get_click_handler( item ) {
 
 	return function( event ) {
 		const selection_state = this.controller.state().get( attribute );
+		const provider = this.controller.state().get( 'library' ).props.get( 'provider' );
 		const new_attachments = selection_state.models.filter(model => ! model.attributes.attachmentExists);
 
 		click_handler = _.bind( click_handler, this );
@@ -37,13 +38,19 @@ export function get_click_handler( item ) {
 			return;
 		}
 
+		// Short circuit for local media provider.
+		if ( provider === 'local' ) {
+			return;
+		}
+
 		event.target.disabled = true;
 
 		wp.ajax.post(
 			'amf-select',
 			{
-				'selection' : selection_state.toJSON(),
-				'post' : wp.media.view.settings.post.id,
+				selection: selection_state.toJSON(),
+				post: wp.media.view.settings.post.id,
+				provider
 			}
 		).done( response => {
 			Object.keys(response).forEach( key => {
@@ -73,8 +80,16 @@ export function addProviderFilter() {
 		return;
 	}
 
+	// If we have only 1 filter then it's the default, no need for a filter.
+	if ( Object.keys( AMF_DATA.providers ).length < 2 ) {
+		return;
+	}
+
 	// Override core styles that allow only two filter inputs
-	addInlineStyle( '.media-modal-content .media-frame select.attachment-filters { width: 150px }' );
+	addInlineStyle( `
+		.media-modal-content .media-frame select.attachment-filters { width: 150px }
+		.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 15px; }
+	` );
 
 	// Create a new MediaLibraryProviderFilter we later will instantiate
 	var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend({
@@ -82,16 +97,35 @@ export function addProviderFilter() {
 
 		createFilters: function() {
 			var filters = {};
+
 			// Formats the 'providers' we've included via wp_localize_script()
 			_.each( AMF_DATA.providers || {}, function( value, index ) {
 				filters[ index ] = {
-					text: value,
+					text: value.name,
 					props: {
 						provider: index,
 					}
 				};
 			});
 			this.filters = filters;
+		},
+
+		select: function() {
+			var model = this.model,
+				value = Object.keys( AMF_DATA.providers )[0],
+				props = model.toJSON();
+
+			_.find( this.filters, function( filter, id ) {
+				var equal = _.all( filter.props, function( prop, key ) {
+					return prop === ( _.isUndefined( props[ key ] ) ? null : props[ key ] );
+				});
+
+				if ( equal ) {
+					return value = id;
+				}
+			});
+
+			this.$el.val( value );
 		}
 	});
 

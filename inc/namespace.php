@@ -65,7 +65,19 @@ function enqueue_scripts() : void {
 
 function get_script_data() : array {
 	$providers = array_reduce( get_providers(), function( array $carry, Provider $provider ) : array {
-		$carry[ $provider->id ] = $provider->name;
+		$carry[ $provider->get_id() ] = [
+			'name' => $provider->get_name(),
+			'supports' => [
+				'create' => $provider->supports_asset_create(),
+				'update' => $provider->supports_asset_update(),
+				'delete' => $provider->supports_asset_delete(),
+				'dynamicResizing' => $provider->supports_dynamic_image_resizing(),
+				'filterDate' => $provider->supports_filter_date(),
+				'filterSearch' => $provider->supports_filter_search(),
+				'filterType' => $provider->supports_filter_type(),
+				'filterUser' => $provider->supports_filter_user(),
+			],
+		];
 		return $carry;
 	}, [] );
 
@@ -76,10 +88,18 @@ function get_script_data() : array {
 
 function ajax_select() : void {
 
-	$provider = get_provider( $_REQUEST['provider'] ?? null );
-
-	if ( empty( $provider ) ) {
-		wp_send_json_error( [ 'message' => 'Provider not found.' ] );
+	try {
+		$provider = get_provider( $_REQUEST['provider'] ?? null );
+	} catch ( Exception $e ) {
+		wp_send_json_error(
+			[
+				[
+					'code' => $e->getCode(),
+					'message' => $e->getMessage(),
+				],
+			],
+			WP_Http::INTERNAL_SERVER_ERROR
+		);
 	}
 
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -130,6 +150,8 @@ function ajax_select() : void {
 		if ( ! empty( $selection['alt'] ) ) {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
+
+		add_post_meta( $attachment_id, 'amf_provider', $provider->get_id(), true );
 
 		$metadata = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $metadata ) ) {
@@ -200,21 +222,46 @@ function allow_local_media() : bool {
 }
 
 function get_providers() : array {
-	return apply_filters( 'amf/providers', [] );
+	$providers = [];
+
+	if ( allow_local_media() ) {
+		$providers[] = new LocalProvider();
+	}
+
+	$providers = apply_filters( 'amf/providers', $providers );
+
+	$providers = array_filter( $providers, function ( $provider ) {
+		return $provider instanceof Provider;
+	} );
+
+	$keyed_providers = [];
+	foreach ( $providers as $provider ) {
+		$keyed_providers[ $provider->get_id() ] = $provider;
+	}
+
+	return $keyed_providers;
 }
 
 function get_provider( ?string $id = null ) : ?Provider {
 	$providers = get_providers();
 	$provider = null;
 
-	if ( ! allow_local_media() ) {
-		$provider = new BlankProvider();
+	// If no ID is passed use the first available as default.
+	if ( empty( $id ) ) {
+		$provider = array_shift( $providers );
+	} else {
+		$provider = $providers[ $id ];
 	}
 
-	foreach ( $providers as $instance ) {
-		if ( $instance->id === $id ) {
-			$provider = $instance;
-		}
+	// If no provider matched then error out.
+	if ( empty( $provider ) ) {
+		throw new Exception(
+			sprintf(
+				/* translators: %s: Provider class ID */
+				__( 'Media Provider with ID "%s" not found.', 'asset-manager-framework' ),
+				$id
+			)
+		);
 	}
 
 	return apply_filters( 'amf/provider', $provider, $id );
@@ -235,19 +282,8 @@ function ajax_query_attachments() : void {
 		wp_send_json_error();
 	}
 
-	$provider = get_provider( $args['provider'] ?? null );
-
-	if ( ! allow_local_media() && empty( $provider ) ) {
-		wp_send_json_error( [ 'message' => 'Provider not found.' ] );
-	}
-
-	// Short circuit for local media provider.
-	if ( empty( $provider ) ) {
-		wp_ajax_query_attachments();
-		return;
-	}
-
 	try {
+		$provider = get_provider( $args['provider'] ?? null );
 		$items = $provider->request_items( $args );
 	} catch ( Exception $e ) {
 		wp_send_json_error(

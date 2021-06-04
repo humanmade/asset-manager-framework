@@ -15,8 +15,19 @@ use WP_Query;
 
 abstract class Provider {
 
-	public static $id;
-	public static $name;
+	/**
+	 * Get the ID for the provider.
+	 *
+	 * @return string
+	 */
+	abstract public function get_id() : string;
+
+	/**
+	 * Get the human readable name for this provider.
+	 *
+	 * @return string
+	 */
+	abstract public function get_name() : string;
 
 	/**
 	 * Perform a request to a media provider and return results according to the arguments.
@@ -160,6 +171,7 @@ abstract class Provider {
 				$item->id = $ids[ $item->id ];
 				$item->attachmentExists = true;
 			}
+			$item->provider = $this->get_id();
 		}
 
 		return $items;
