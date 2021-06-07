@@ -82,7 +82,7 @@ export function get_click_handler( item ) {
 
 export function addProviderFilter() {
 	// Short circuit if we don't have providers
-	if ( ! AMF_DATA || ! AMF_DATA.hasOwnProperty( 'providers' ) ) {
+	if ( ! AMF_DATA?.providers || Object.keys( AMF_DATA.providers ).length === 0 ) {
 		return;
 	}
 
