@@ -179,7 +179,7 @@ function addProviderFilter() {
     return;
   }
 
-  addInlineStyle("\n\t\t.amf-hidden { display: none !important; }\n\t"); // If we have only 1 filter then it's the default, no need for a filter.
+  addInlineStyle("\n\t\t.view-switch { display: none !important; }\n\t\t.media-toolbar-secondary { padding: 12px 0; }\n\t\t.amf-hidden { display: none !important; }\n\t"); // If we have only 1 provider then it's the default, no need for a filter.
 
   if (Object.keys(AMF_DATA.providers).length < 2) {
     var provider = Object.values(AMF_DATA.providers)[0];
@@ -217,7 +217,8 @@ function addProviderFilter() {
         });
 
         if (equal) {
-          return value = id;
+          value = id;
+          return value;
         }
       });
 
