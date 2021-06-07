@@ -28,6 +28,9 @@ function bootstrap() : void {
 
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+
+	// Ensure thumbnail sizes are set correctly - WP will prepend the base URL again.
+	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 }
 
 function init() : void {
@@ -227,7 +230,8 @@ function get_attachment_by_id( string $id ) :? WP_Post {
 }
 
 function allow_local_media() : bool {
-	return apply_filters( 'amf/allow_local_media', true );
+	$allow = defined( 'AMF_ALLOW_LOCAL_MEDIA' ) ? AMF_ALLOW_LOCAL_MEDIA : true;
+	return apply_filters( 'amf/allow_local_media', $allow );
 }
 
 function register_provider( Provider $provider ) {
@@ -304,4 +308,24 @@ function ajax_query_attachments() : void {
 	}
 
 	wp_send_json_success( $items->toArray() );
+}
+
+function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
+	if ( strpos( $attachment->post_name, 'amf-' ) !== 0 ) {
+		return $response;
+	}
+
+	// Correct the image sizes array to remove the duplicated base URL when a
+	// full URL is provided as the size file name.
+	if ( ! empty( $response['sizes'] ) ) {
+		$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+		foreach ( $response['sizes'] as $name => $size ) {
+			if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
+				continue;
+			}
+			$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+		}
+	}
+
+	return $response;
 }
