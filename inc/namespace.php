@@ -60,7 +60,11 @@ function enqueue_scripts() : void {
 		false
 	);
 
-	wp_localize_script( 'asset-manager-framework', 'AMF_DATA', get_script_data() );
+	wp_add_inline_script(
+		'asset-manager-framework',
+		sprintf( 'var AMF_DATA = %s;', wp_json_encode( get_script_data() ) ),
+		'before'
+	);
 }
 
 function get_script_data() : array {
