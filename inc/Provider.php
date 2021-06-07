@@ -166,12 +166,14 @@ abstract class Provider {
 		$posts = ( new WP_Query( $query ) )->posts;
 		$ids = array_column( $posts, 'ID', 'post_name' );
 
+		$provider_id = $this->get_id();
+
 		foreach ( $items as $item ) {
 			if ( isset( $ids[ $item->id ] ) ) {
 				$item->id = $ids[ $item->id ];
 				$item->attachmentExists = true;
 			}
-			$item->provider = $this->get_id();
+			$item->provider = $provider_id;
 		}
 
 		return $items;
