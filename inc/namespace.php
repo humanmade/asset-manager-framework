@@ -37,6 +37,11 @@ function init() : void {
 		Integrations\MultilingualPress\bootstrap();
 	}
 
+	// Load the Local Media provider.
+	if ( allow_local_media() ) {
+		register_provider( new LocalProvider() );
+	}
+
 	do_action( 'amf/loaded' );
 }
 
@@ -225,25 +230,22 @@ function allow_local_media() : bool {
 	return apply_filters( 'amf/allow_local_media', true );
 }
 
+function register_provider( Provider $provider ) {
+	global $amf_providers;
+
+	if ( empty( $amf_providers ) ) {
+		$amf_providers = [];
+	}
+
+	$amf_providers[ $provider->get_id() ] = $provider;
+}
+
 function get_providers() : array {
-	$providers = [];
+	global $amf_providers;
 
-	if ( allow_local_media() ) {
-		$providers[] = new LocalProvider();
-	}
+	$providers = $amf_providers ?? [];
 
-	$providers = apply_filters( 'amf/providers', $providers );
-
-	$providers = array_filter( $providers, function ( $provider ) {
-		return $provider instanceof Provider;
-	} );
-
-	$keyed_providers = [];
-	foreach ( $providers as $provider ) {
-		$keyed_providers[ $provider->get_id() ] = $provider;
-	}
-
-	return $keyed_providers;
+	return apply_filters( 'amf/providers', $providers );
 }
 
 function get_provider( ?string $id = null ) : Provider {
