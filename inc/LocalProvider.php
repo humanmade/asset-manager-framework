@@ -19,6 +19,8 @@ class LocalProvider extends Provider {
 	}
 
 	protected function request( array $args ) : MediaList {
+		// Call the default core attachment query AJAX handler.
+		// This will return JSON and exit before the return statement below.
 		wp_ajax_query_attachments();
 		return new MediaList();
 	}
