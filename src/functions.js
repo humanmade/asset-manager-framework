@@ -133,7 +133,8 @@ export function addProviderFilter() {
 				});
 
 				if ( equal ) {
-					return value = id;
+					value = id;
+					return value;
 				}
 			});
 
