@@ -40,7 +40,7 @@ export function get_click_handler( item ) {
 		// Get the current provider.
 		let provider = this.controller.state().get( 'library' ).props.get( 'provider' );
 		if ( ! provider && Object.keys( AMF_DATA.providers ).length > 0 ) {
-			provider = Object.keys( AMF_DATA.providers )[0];
+			provider = Object.keys( AMF_DATA.providers )[0] || null;
 		}
 
 		// Short circuit for local media provider.
@@ -110,7 +110,7 @@ export function addProviderFilter() {
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
-			var filters = {};
+			let filters = {};
 
 			// Formats the 'providers' we've included via wp_localize_script()
 			_.each( AMF_DATA.providers || {}, function( value, index ) {
@@ -125,12 +125,11 @@ export function addProviderFilter() {
 		},
 
 		select: function() {
-			var model = this.model,
-				value = Object.keys( AMF_DATA.providers )[0],
-				props = model.toJSON();
+			const props = this.model.toJSON();
+			let value = Object.keys( AMF_DATA.providers )[0];
 
 			_.find( this.filters, function( filter, id ) {
-				var equal = _.all( filter.props, function( prop, key ) {
+				const equal = _.all( filter.props, function( prop, key ) {
 					return prop === ( _.isUndefined( props[ key ] ) ? null : props[ key ] );
 				});
 
