@@ -27,7 +27,8 @@ export function get_click_handler( item ) {
 	const attribute = ( item.requires.library ? 'library' : 'selection' );
 
 	return function( event ) {
-		const selection_state = this.controller.state().get( attribute );
+		const state = this.controller.state();
+		const selection_state = state.get( attribute );
 		const new_attachments = selection_state.models.filter(model => ! model.attributes.attachmentExists);
 
 		click_handler = _.bind( click_handler, this );
@@ -38,9 +39,10 @@ export function get_click_handler( item ) {
 		}
 
 		// Get the current provider.
-		let provider = this.controller.state().get( 'library' ).props.get( 'provider' );
-		if ( ! provider && Object.keys( AMF_DATA.providers ).length > 0 ) {
-			provider = Object.keys( AMF_DATA.providers )[0] || null;
+		const provider = state.get( 'library' ).props.get( 'provider' ) || Object.keys( AMF_DATA.providers )[0];
+		if ( ! provider ) {
+			alert( 'No provider found!' );
+			return;
 		}
 
 		// Short circuit for local media provider.
@@ -67,11 +69,7 @@ export function get_click_handler( item ) {
 
 			click_handler();
 		} ).fail( response => {
-			let message = ( 'An unknown error occurred.' );
-
-			if ( response && response[0] && response[0].message ) {
-				message = response[0].message;
-			}
+			const message = response?.[0]?.message || 'An unknown error occurred.';
 
 			alert( message );
 
@@ -81,8 +79,10 @@ export function get_click_handler( item ) {
 }
 
 export function addProviderFilter() {
+	const { providers } = AMF_DATA;
+
 	// Short circuit if we don't have providers
-	if ( ! AMF_DATA?.providers || Object.keys( AMF_DATA.providers ).length === 0 ) {
+	if ( ! providers?.length ) {
 		return;
 	}
 
@@ -93,8 +93,8 @@ export function addProviderFilter() {
 	` );
 
 	// If we have only 1 provider then it's the default, no need for a filter.
-	if ( Object.keys( AMF_DATA.providers ).length < 2 ) {
-		const provider = Object.values( AMF_DATA.providers )[0];
+	if ( providers.length === 1 ) {
+		const provider = Object.values( providers )[0];
 		toggleUI( provider.supports );
 		return;
 	}
@@ -110,10 +110,10 @@ export function addProviderFilter() {
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
-			let filters = {};
+			const filters = {};
 
-			// Formats the 'providers' we've included via wp_localize_script()
-			_.each( AMF_DATA.providers || {}, function( value, index ) {
+			// Formats the 'providers' we've included via wp_add_inline_script()
+			_.each( providers, function( value, index ) {
 				filters[ index ] = {
 					text: value.name,
 					props: {
@@ -126,11 +126,11 @@ export function addProviderFilter() {
 
 		select: function() {
 			const props = this.model.toJSON();
-			let value = Object.keys( AMF_DATA.providers )[0];
+			let value = Object.keys( providers )[0];
 
 			_.find( this.filters, function( filter, id ) {
 				const equal = _.all( filter.props, function( prop, key ) {
-					return prop === ( _.isUndefined( props[ key ] ) ? null : props[ key ] );
+					return prop === ( props?.[ key ] || null );
 				});
 
 				if ( equal ) {
@@ -143,7 +143,7 @@ export function addProviderFilter() {
 
 			// Show / hide components based on provider capabilities.
 			if ( props.provider ) {
-				toggleUI( AMF_DATA.providers[ props.provider ].supports );
+				toggleUI( providers[ props.provider ].supports );
 			}
 		}
 	});
