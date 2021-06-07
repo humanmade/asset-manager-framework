@@ -88,7 +88,7 @@ export function addProviderFilter() {
 
 	addInlineStyle( `
 		.view-switch { display: none !important; }
-		.media-toolbar-secondary { padding: 12px 0; }
+		body.upload-php .media-toolbar-secondary { padding: 12px 0; }
 		.amf-hidden { display: none !important; }
 	` );
 
