@@ -90,7 +90,7 @@ export function addProviderFilter() {
 		.amf-hidden { display: none !important; }
 	` );
 
-	// If we have only 1 filter then it's the default, no need for a filter.
+	// If we have only 1 provider then it's the default, no need for a filter.
 	if ( Object.keys( AMF_DATA.providers ).length < 2 ) {
 		const provider = Object.values( AMF_DATA.providers )[0];
 		toggleUI( provider.supports );
