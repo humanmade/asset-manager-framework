@@ -16,8 +16,8 @@ use WP_Query;
 
 function bootstrap() : void {
 	add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
-	add_action( 'wp_enqueue_media', __NAMESPACE__ . '\\enqueue_scripts', -10 );
-	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts', -10 );
+	add_action( 'wp_enqueue_media', __NAMESPACE__ . '\\enqueue_scripts', 1000 );
+	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts', 1000 );
 
 	// Replace the default wp_ajax_query_attachments handler with our own.
 	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
@@ -65,11 +65,12 @@ function enqueue_scripts() : void {
 		array_merge(
 			[
 				'media-views',
+				'wp-hooks',
 			],
 			$asset_file['dependencies']
 		),
 		$asset_file['version'],
-		false
+		true
 	);
 
 	$data = apply_filters( 'amf/script/data', [
