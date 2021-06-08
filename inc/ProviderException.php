@@ -19,6 +19,16 @@ final class ProviderException extends Exception {
 		);
 	}
 
+	public static function invalid( $provider ): self {
+		return new self(
+			sprintf(
+				/* translators: %s: Provider class */
+				__( 'Provider class "%s" invalid.', 'asset-manager-framework' ),
+				is_object( $provider ) ? get_class( $provider ) : ''
+			)
+		);
+	}
+
 	public static function not_found( string $id ): self {
 		return new self(
 			sprintf(

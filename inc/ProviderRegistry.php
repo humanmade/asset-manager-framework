@@ -26,6 +26,9 @@ final class ProviderRegistry {
 
 	public function register( Provider $provider ) : ProviderRegistry {
 		$provider = apply_filters( 'amf/provider', $provider );
+		if ( ! $provider instanceof Provider ) {
+			throw ProviderException::invalid( $provider );
+		}
 		$this->providers[ $provider->get_id() ] = $provider;
 		return $this;
 	}
