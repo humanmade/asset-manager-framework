@@ -53,6 +53,7 @@ final class ProviderRegistry {
 		return array_map(
 			function( Provider $provider ) : array {
 				return [
+					'id' => $provider->get_id(),
 					'name' => $provider->get_name(),
 					'supports' => [
 						'create' => $provider->supports_asset_create(),
@@ -66,7 +67,7 @@ final class ProviderRegistry {
 					],
 				];
 			},
-			$this->providers
+			array_values( $this->providers )
 		);
 	}
 

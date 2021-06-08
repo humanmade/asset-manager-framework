@@ -39,7 +39,7 @@ export function get_click_handler( item ) {
 		}
 
 		// Get the current provider.
-		const provider = state.get( 'library' ).props.get( 'provider' ) || Object.keys( AMF_DATA.providers )[0];
+		const provider = state.get( 'library' ).props.get( 'provider' ) || AMF_DATA.providers[0]?.id;
 		if ( ! provider ) {
 			alert( 'No provider found!' );
 			return;
@@ -82,7 +82,7 @@ export function addProviderFilter() {
 	const { providers } = AMF_DATA;
 
 	// Short circuit if we don't have providers
-	if ( ! providers?.length ) {
+	if ( ! providers.length ) {
 		return;
 	}
 
@@ -94,8 +94,7 @@ export function addProviderFilter() {
 
 	// If we have only 1 provider then it's the default, no need for a filter.
 	if ( providers.length === 1 ) {
-		const provider = Object.values( providers )[0];
-		toggleUI( provider.supports );
+		toggleUI( providers[0].supports );
 		return;
 	}
 
@@ -110,23 +109,20 @@ export function addProviderFilter() {
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
-			const filters = {};
-
-			// Formats the 'providers' we've included via wp_add_inline_script()
-			_.each( providers, function( value, index ) {
-				filters[ index ] = {
-					text: value.name,
+			this.filters = providers.reduce( ( filters, { id, name } ) => {
+				filters[ id ] = {
+					text: name,
 					props: {
-						provider: index,
-					}
+						provider: id,
+					},
 				};
-			});
-			this.filters = filters;
+				return filters;
+			}, {} );
 		},
 
 		select: function() {
 			const props = this.model.toJSON();
-			let value = Object.keys( providers )[0];
+			let value = providers?.[0]?.id;
 
 			_.find( this.filters, function( filter, id ) {
 				const equal = _.all( filter.props, function( prop, key ) {
@@ -143,7 +139,8 @@ export function addProviderFilter() {
 
 			// Show / hide components based on provider capabilities.
 			if ( props.provider ) {
-				toggleUI( providers[ props.provider ].supports );
+				const provider = providers.find( ( { id } ) => id === props.provider );
+				toggleUI( provider.supports );
 			}
 		}
 	});
