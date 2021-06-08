@@ -147,6 +147,15 @@ add_filter( 'amf/provider', function ( Provider $provider ) {
 
 This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior.
 
+## Local Media
+
+Local media is supported by default and can be used side by side with any additional media providers but can also be controlled by using one the following methods:
+
+1. Defining the `AMF_ALLOW_LOCAL_MEDIA` constant as a boolean
+2. Use the `amf/allow_local_media` filter to return a boolean
+
+The filter will take precedence over the constant.
+
 # License: GPLv2 #
 
 This program is free software; you can redistribute it and/or modify
