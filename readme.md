@@ -45,7 +45,7 @@ The following third party plugins are supported via an included integration laye
 The following new features are planned but not yet implemented:
 
 * [ ] [Various degrees of read-only media (to prevent local uploading, editing, cropping, or deletion)](https://github.com/humanmade/asset-manager-framework/issues/13)
-* [ ] Support for multiple simultaneous media providers
+* [x] Support for multiple simultaneous media providers
 
 The following features will *not* be supported:
 
@@ -75,19 +75,28 @@ The actual media file does not get sideloaded into WordPress - it intentionally 
 
 There are two steps needed to integrate a media provider using the Asset Manager Framework:
 
-1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `request()` method to fetch results from your external media provider based on query arguments from the media manager.
-2. Hook into the `amf/provider` filter to register your provider for use.
+1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `get_id()`, `get_name()` and `request()` methods to fetch results from your external media provider based on query arguments from the media manager.
+2. Hook into the `amf/register_providers` action to register your provider for use.
 
 Full documentation is coming soon, but for now here's an example of a provider which supplies images from placekitten.com:
 
 ```php
 use AssetManagerFramework\{
+	ProviderRegistry
 	Provider,
 	MediaList,
 	Image
 };
 
 class KittenProvider extends Provider {
+
+	public function get_id() {
+		return 'kittens';
+	}
+
+	public function get_name() {
+		return __( 'Place Kitten' );
+	}
 
 	protected function request( array $args ) : MediaList {
 		$kittens = [
@@ -115,8 +124,8 @@ class KittenProvider extends Provider {
 
 }
 
-add_filter( 'amf/provider', function () {
-	return new KittenProvider();
+add_action( 'amf/register_providers', function ( ProviderRegistry $provider_registry ) {
+	$provider_registry->register( new KittenProvider() );
 } );
 ```
 
@@ -124,15 +133,28 @@ Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
 
-Since you have access to the current provider instance via the `amf/provider`, you could also use it and decorate it:
+You also have access to provider instances during registration via the `amf/provider` filter, so you could use it to decorate providers:
 
 ```php
 add_filter( 'amf/provider', function ( Provider $provider ) {
+	if ( $provider->get_id() !== 'kittens' ) {
+		return $provider;
+	}
+
 	return new DecoratingProvider( $provider );
-}, 20 );
+} );
 ```
 
-This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior. Remember to use a priority later than the default for this filter, for example 20, so your code runs after the default filter.
+This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior.
+
+## Local Media
+
+Local media is supported by default and can be used side by side with any additional media providers but can also be controlled by using one the following methods:
+
+1. Defining the `AMF_ALLOW_LOCAL_MEDIA` constant as a boolean
+2. Use the `amf/allow_local_media` filter to return a boolean
+
+The filter will take precedence over the constant.
 
 # License: GPLv2 #
 

@@ -16,8 +16,8 @@ use WP_Query;
 
 function bootstrap() : void {
 	add_action( 'plugins_loaded', __NAMESPACE__ . '\\init' );
-	add_action( 'admin_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
-	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts' );
+	add_action( 'wp_enqueue_media', __NAMESPACE__ . '\\enqueue_scripts', 1000 );
+	add_action( 'wp_print_scripts', __NAMESPACE__ . '\\enqueue_scripts', 1000 );
 
 	// Replace the default wp_ajax_query_attachments handler with our own.
 	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
@@ -28,6 +28,9 @@ function bootstrap() : void {
 
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+
+	// Ensure thumbnail sizes are set correctly - WP will prepend the base URL again.
+	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 }
 
 function init() : void {
@@ -36,6 +39,15 @@ function init() : void {
 		require_once __DIR__ . '/integrations/multilingualpress/namespace.php';
 		Integrations\MultilingualPress\bootstrap();
 	}
+
+	$provider_registry = ProviderRegistry::instance();
+
+	// Load the Local Media provider.
+	if ( allow_local_media() ) {
+		$provider_registry->register( new LocalProvider() );
+	}
+
+	do_action( 'amf/register_providers', $provider_registry );
 
 	do_action( 'amf/loaded' );
 }
@@ -53,15 +65,41 @@ function enqueue_scripts() : void {
 		array_merge(
 			[
 				'media-views',
+				'wp-hooks',
 			],
 			$asset_file['dependencies']
 		),
 		$asset_file['version'],
-		false
+		true
+	);
+
+	$data = apply_filters( 'amf/script/data', [
+		'providers' => ProviderRegistry::instance()->get_script_data(),
+	] );
+
+	wp_add_inline_script(
+		'asset-manager-framework',
+		sprintf( 'var AMF_DATA = %s;', wp_json_encode( $data ) ),
+		'before'
 	);
 }
 
 function ajax_select() : void {
+
+	try {
+		$provider = ProviderRegistry::instance()->get( $_REQUEST['provider'] ?? '' );
+	} catch ( Exception $e ) {
+		wp_send_json_error(
+			[
+				[
+					'code' => $e->getCode(),
+					'message' => $e->getMessage(),
+				],
+			],
+			WP_Http::INTERNAL_SERVER_ERROR
+		);
+	}
+
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$selected = isset( $_REQUEST['selection'] ) ? wp_unslash( (array) $_REQUEST['selection'] ) : [];
 
@@ -76,7 +114,7 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = get_provider()->supports_dynamic_image_resizing();
+	$supports_dynamic_image_resizing = $provider->supports_dynamic_image_resizing();
 
 	$attachments = [];
 
@@ -111,6 +149,8 @@ function ajax_select() : void {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
 
+		add_post_meta( $attachment_id, 'amf_provider', $provider->get_id(), true );
+
 		$metadata = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $metadata ) ) {
 			$metadata = [];
@@ -128,7 +168,6 @@ function ajax_select() : void {
 
 		if ( ! empty( $selection['sizes'] ) && ! $supports_dynamic_image_resizing ) {
 			$metadata['sizes'] = array_map( function ( array $size ) use ( $mime_type ): array {
-
 				return [
 					'file' => $size['url'],
 					'width' => $size['width'],
@@ -176,16 +215,9 @@ function get_attachment_by_id( string $id ) :? WP_Post {
 	return $query->next_post();
 }
 
-function get_provider() : Provider {
-	static $provider = null;
-
-	if ( $provider ) {
-		return $provider;
-	}
-
-	$provider = apply_filters( 'amf/provider', new BlankProvider() );
-
-	return $provider;
+function allow_local_media() : bool {
+	$allow = defined( 'AMF_ALLOW_LOCAL_MEDIA' ) ? AMF_ALLOW_LOCAL_MEDIA : true;
+	return apply_filters( 'amf/allow_local_media', $allow );
 }
 
 function ajax_query_attachments() : void {
@@ -204,7 +236,8 @@ function ajax_query_attachments() : void {
 	}
 
 	try {
-		$items = get_provider()->request_items( $args );
+		$provider = ProviderRegistry::instance()->get( $args['provider'] ?? '' );
+		$items = $provider->request_items( $args );
 	} catch ( Exception $e ) {
 		wp_send_json_error(
 			[
@@ -218,4 +251,28 @@ function ajax_query_attachments() : void {
 	}
 
 	wp_send_json_success( $items->toArray() );
+}
+
+function is_amf_asset( WP_Post $attachment ) : bool {
+	return strpos( $attachment->post_name, 'amf-' ) === 0;
+}
+
+function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
+	if ( ! is_amf_asset( $attachment ) ) {
+		return $response;
+	}
+
+	// Correct the image sizes array to remove the duplicated base URL when a
+	// full URL is provided as the size file name.
+	if ( ! empty( $response['sizes'] ) ) {
+		$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+		foreach ( $response['sizes'] as $name => $size ) {
+			if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
+				continue;
+			}
+			$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+		}
+	}
+
+	return $response;
 }
