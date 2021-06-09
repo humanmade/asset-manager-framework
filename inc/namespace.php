@@ -44,7 +44,11 @@ function init() : void {
 
 	// Load the Local Media provider.
 	if ( allow_local_media() ) {
-		$provider_registry->register( new LocalProvider() );
+		$provider_registry->register(
+			'local',
+			__( 'Local Media', 'asset-manager-framework' ),
+			new LocalProvider()
+		);
 	}
 
 	do_action( 'amf/register_providers', $provider_registry );

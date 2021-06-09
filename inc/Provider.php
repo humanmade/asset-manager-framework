@@ -20,14 +20,36 @@ abstract class Provider {
 	 *
 	 * @return string
 	 */
-	abstract public function get_id() : string;
+	public function get_id() : string {
+		return $this->id;
+	}
+
+	/**
+	 * Get the ID for the provider.
+	 *
+	 * @param string $id An ID for the provider.
+	 */
+	public function set_id( string $id ) {
+		$this->id = $id;
+	}
 
 	/**
 	 * Get the human readable name for this provider.
 	 *
 	 * @return string
 	 */
-	abstract public function get_name() : string;
+	public function get_name() : string {
+		return $this->name;
+	}
+
+	/**
+	 * Get the human readable name for this provider.
+	 *
+	 * @param string $name A human readable name for the provider.
+	 */
+	public function set_name( string $name ) {
+		$this->name = $name;
+	}
 
 	/**
 	 * Perform a request to a media provider and return results according to the arguments.

@@ -24,8 +24,11 @@ final class ProviderRegistry {
 		return self::$instance;
 	}
 
-	public function register( Provider $provider ) : ProviderRegistry {
-		$provider = apply_filters( 'amf/provider', $provider );
+	public function register( string $id, string $name, Provider $provider ) : ProviderRegistry {
+		$provider->set_id( $id );
+		$name = apply_filters( 'amf/provider_name', $name, $id, $provider );
+		$provider->set_name( $name );
+		$provider = apply_filters( 'amf/provider', $provider, $id );
 		if ( ! $provider instanceof Provider ) {
 			throw ProviderException::invalid( $provider );
 		}

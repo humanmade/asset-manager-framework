@@ -10,13 +10,6 @@ declare( strict_types=1 );
 namespace AssetManagerFramework;
 
 class LocalProvider extends Provider {
-	public function get_id() : string {
-		return 'local';
-	}
-
-	public function get_name() : string {
-		return __( 'Local Media', 'asset-manager-framework' );
-	}
 
 	protected function request( array $args ) : MediaList {
 		// Call the default core attachment query AJAX handler.
