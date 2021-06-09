@@ -31,6 +31,9 @@ function bootstrap() : void {
 
 	// Ensure thumbnail sizes are set correctly - WP will prepend the base URL again.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
+
+	// Provide fall back URLs for missing image sizes.
+	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
 }
 
 function init() : void {
@@ -275,4 +278,47 @@ function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
 	}
 
 	return $response;
+}
+
+function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+
+	if ( ! is_amf_asset( $attachment ) ) {
+		return $metadata;
+	}
+
+	if ( ! wp_attachment_is_image( $attachment_id ) ) {
+		return $metadata;
+	}
+
+	// Return early if provider supports dynamic image resizing.
+	try {
+		$provider_id = get_post_meta( $attachment_id, 'amf_provider', true );
+		$provider = ProviderRegistry::instance()->get( $provider_id );
+		if ( $provider->supports_dynamic_image_resizing() ) {
+			return $metadata;
+		}
+	} catch ( Exception $e ) {
+		return $metadata;
+	}
+
+	// Use the full size if available or create a fallback from the main file metadata.
+	$fallback_size = $metadata['sizes']['full'] ?? [
+		'file' => $metadata['file'],
+		'width' => $metadata['width'],
+		'height' => $metadata['height'],
+		'mime-type' => $attachment->post_mime_type,
+	];
+
+	$missing_sizes = array_diff(
+		get_intermediate_image_sizes(),
+		array_keys( $metadata['sizes'] )
+	);
+
+	// Populate missing image sizes from original.
+	foreach ( $missing_sizes as $size ) {
+		$metadata['sizes'][ $size ] = $fallback_size;
+	}
+
+	return $metadata;
 }
