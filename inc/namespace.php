@@ -12,6 +12,7 @@ namespace AssetManagerFramework;
 use Exception;
 use WP_Http;
 use WP_Post;
+use WP_REST_Response;
 use WP_Query;
 
 function bootstrap() : void {
@@ -29,8 +30,14 @@ function bootstrap() : void {
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
 
-	// Ensure thumbnail sizes are set correctly - WP will prepend the base URL again.
+	// Ensure image URLs are output correctly - WP will prepend the base URL again in some cases.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
+	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
+	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\fix_attachment_url', 1000, 2 );
+	add_filter( 'rest_prepare_attachment', __NAMESPACE__ . '\\fix_rest_attachment_urls', 1000, 3 );
+
+	// Provide fall back URLs for missing image sizes.
+	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
 }
 
 function init() : void {
@@ -257,22 +264,94 @@ function is_amf_asset( WP_Post $attachment ) : bool {
 	return strpos( $attachment->post_name, 'amf-' ) === 0;
 }
 
-function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
+function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
 	if ( ! is_amf_asset( $attachment ) ) {
-		return $response;
+		return $url;
 	}
 
-	// Correct the image sizes array to remove the duplicated base URL when a
-	// full URL is provided as the size file name.
+	$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+	return $base_url . str_replace( $base_url, '', $url );
+}
+
+function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
 	if ( ! empty( $response['sizes'] ) ) {
-		$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
 		foreach ( $response['sizes'] as $name => $size ) {
-			if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
-				continue;
-			}
-			$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+			$response['sizes'][ $name ]['url'] = fix_duplicate_baseurl( $size['url'], $attachment );
 		}
 	}
 
 	return $response;
+}
+
+function fix_srcset_urls( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+
+	foreach ( $sources as $width => $source ) {
+		$sources[ $width ]['url'] = fix_duplicate_baseurl( $source['url'], $attachment );
+	}
+
+	return $sources;
+}
+
+function fix_attachment_url( string $url, int $attachment_id ) : string {
+	$attachment = get_post( $attachment_id );
+	return fix_duplicate_baseurl( $url, $attachment );
+}
+
+function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachment ) : WP_REST_Response {
+
+	$data = $response->get_data();
+
+	if ( ! empty( $data['media_details']['sizes'] ) ) {
+		foreach ( $data['media_details']['sizes'] as $name => $size ) {
+			$data['media_details']['sizes'][ $name ]['source_url'] = fix_duplicate_baseurl( $size['source_url'], $attachment );
+		}
+	}
+
+	$response->set_data( $data );
+
+	return $response;
+}
+
+function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+
+	if ( ! is_amf_asset( $attachment ) ) {
+		return $metadata;
+	}
+
+	if ( ! wp_attachment_is_image( $attachment_id ) ) {
+		return $metadata;
+	}
+
+	// Return early if provider supports dynamic image resizing.
+	try {
+		$provider_id = get_post_meta( $attachment_id, 'amf_provider', true );
+		$provider = ProviderRegistry::instance()->get( $provider_id );
+		if ( $provider->supports_dynamic_image_resizing() ) {
+			return $metadata;
+		}
+	} catch ( Exception $e ) {
+		return $metadata;
+	}
+
+	// Use the full size if available or create a fallback from the main file metadata.
+	$fallback_size = $metadata['sizes']['full'] ?? [
+		'file' => $metadata['file'],
+		'width' => $metadata['width'],
+		'height' => $metadata['height'],
+		'mime-type' => $attachment->post_mime_type,
+	];
+
+	$missing_sizes = array_diff(
+		get_intermediate_image_sizes(),
+		array_keys( $metadata['sizes'] )
+	);
+
+	// Populate missing image sizes from original.
+	foreach ( $missing_sizes as $size ) {
+		$metadata['sizes'][ $size ] = $fallback_size;
+	}
+
+	return $metadata;
 }
