@@ -12,6 +12,7 @@ namespace AssetManagerFramework;
 use Exception;
 use WP_Http;
 use WP_Post;
+use WP_REST_Response;
 use WP_Query;
 
 function bootstrap() : void {
@@ -33,6 +34,7 @@ function bootstrap() : void {
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
 	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\fix_attachment_url', 1000, 2 );
+	add_filter( 'rest_prepare_attachment', __NAMESPACE__ . '\\fix_rest_attachment_urls', 1000, 3 );
 
 	// Provide fall back URLs for missing image sizes.
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
@@ -294,6 +296,21 @@ function fix_srcset_urls( array $sources, array $size_array, string $image_src, 
 function fix_attachment_url( string $url, int $attachment_id ) : string {
 	$attachment = get_post( $attachment_id );
 	return fix_duplicate_baseurl( $url, $attachment );
+}
+
+function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachment ) : WP_REST_Response {
+
+	$data = $response->get_data();
+
+	if ( ! empty( $data['media_details']['sizes'] ) ) {
+		foreach ( $data['media_details']['sizes'] as $name => $size ) {
+			$data['media_details']['sizes'][ $name ]['source_url'] = fix_duplicate_baseurl( $size['source_url'], $attachment );
+		}
+	}
+
+	$response->set_data( $data );
+
+	return $response;
 }
 
 function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
