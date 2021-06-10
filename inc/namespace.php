@@ -29,8 +29,10 @@ function bootstrap() : void {
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
 
-	// Ensure thumbnail sizes are set correctly - WP will prepend the base URL again.
+	// Ensure image URLs are output correctly - WP will prepend the base URL again in some cases.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
+	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
+	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\fix_attachment_url', 1000, 2 );
 
 	// Provide fall back URLs for missing image sizes.
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
@@ -260,24 +262,38 @@ function is_amf_asset( WP_Post $attachment ) : bool {
 	return strpos( $attachment->post_name, 'amf-' ) === 0;
 }
 
-function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
+function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
 	if ( ! is_amf_asset( $attachment ) ) {
-		return $response;
+		return $url;
 	}
 
-	// Correct the image sizes array to remove the duplicated base URL when a
-	// full URL is provided as the size file name.
+	$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
+	return $base_url . str_replace( $base_url, '', $url );
+}
+
+function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
 	if ( ! empty( $response['sizes'] ) ) {
-		$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
 		foreach ( $response['sizes'] as $name => $size ) {
-			if ( mb_substr_count( $size['url'], $base_url ) < 2 ) {
-				continue;
-			}
-			$response['sizes'][ $name ]['url'] = $base_url . str_replace( $base_url, '', $size['url'] );
+			$response['sizes'][ $name ]['url'] = fix_duplicate_baseurl( $size['url'], $attachment );
 		}
 	}
 
 	return $response;
+}
+
+function fix_srcset_urls( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+
+	foreach ( $sources as $width => $source ) {
+		$sources[ $width ]['url'] = fix_duplicate_baseurl( $source['url'], $attachment );
+	}
+
+	return $sources;
+}
+
+function fix_attachment_url( string $url, int $attachment_id ) : string {
+	$attachment = get_post( $attachment_id );
+	return fix_duplicate_baseurl( $url, $attachment );
 }
 
 function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
