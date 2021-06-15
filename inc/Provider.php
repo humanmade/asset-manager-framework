@@ -11,6 +11,7 @@ namespace AssetManagerFramework;
 
 use Exception;
 use RangeException;
+use WP_Post;
 use WP_Query;
 
 abstract class Provider {
@@ -90,7 +91,22 @@ abstract class Provider {
 	}
 
 	/**
-	 * Fetches a list of media items that are ultimately used directly by the media managaer.
+	 * Handles resizing of an AMF attachment.
+	 *
+	 * @param WP_Post $attachment The attachment post.
+	 * @param int $width Target width.
+	 * @param int $height Target height.
+	 * @param bool|array $crop If truthy crop to the given dimensions, can be a non-associative
+	 *                         array of x and y positions where x is 'left', 'center' or 'right'
+	 *                         and y is 'top', 'center' or 'bottom'.
+	 * @return string The resized asset URL.
+	 */
+	public function resize( WP_Post $attachment, int $width, int $height, $crop = false ) : string {
+		return $attachment->guid;
+	}
+
+	/**
+	 * Fetches a list of media items that are ultimately used directly by the media manager.
 	 *
 	 * @param array $args Raw query arguments from the POST request in the media manager.
 	 * @throws RangeException Thrown if the provider returns too many media items.
