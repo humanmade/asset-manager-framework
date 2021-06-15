@@ -174,7 +174,7 @@ export function addInlineStyle( styles ) {
 }
 
 export function toggleUI( supports ) {
-	jQuery( 'a[href*="/media-new.php"],.uploader-inline' ).toggleClass( 'amf-hidden', ! supports.create );
+	jQuery( 'a[href*="media-new.php"],.uploader-inline' ).toggleClass( 'amf-hidden', ! supports.create );
 	jQuery( '.media-button.delete-selected-button' ).toggleClass( 'amf-hidden', ! supports.delete );
 	jQuery( '#media-attachment-date-filters' ).toggleClass( 'amf-hidden', ! supports.filterDate );
 	jQuery( '#media-attachment-filters' ).toggleClass( 'amf-hidden', ! supports.filterType );
