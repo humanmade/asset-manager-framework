@@ -38,6 +38,59 @@ function bootstrap() : void {
 
 	// Provide fall back URLs for missing image sizes.
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
+
+	// Permissions.
+	add_filter( 'map_meta_cap', __NAMESPACE__ . '\\filter_map_meta_cap', 10, 4 );
+}
+
+/**
+ * Filters the primitive capabilities required of the given user to satisfy the capability being checked.
+ *
+ * @param string[] $caps    Primitive capabilities required of the user.
+ * @param string   $cap     Capability being checked.
+ * @param int      $user_id The user ID.
+ * @param array    $args    Adds context to the capability check, typically
+ *                           starting with an object ID.
+ * @return string[] Primitive capabilities required of the user.
+ */
+function filter_map_meta_cap( array $caps, string $cap, int $user_id, array $args ) : array {
+
+	$caps_to_check = [ 'edit_post', 'delete_post' ];
+
+	if ( ! in_array( $cap, $caps_to_check, true ) ) {
+		return $caps;
+	}
+
+	if ( empty( $args ) || ! is_int( $args[0] ) ) {
+		return $caps;
+	}
+
+	$post_id = $args[0];
+	if ( get_post_type( $post_id ) !== 'attachment' ) {
+		return $caps;
+	}
+
+	$provider_name = get_post_meta( $post_id, 'amf_provider', true );
+	if ( empty( $provider_name ) ) {
+		return $caps;
+	}
+
+	try {
+		$provider = ProviderRegistry::instance()->get( $provider_name );
+	} catch ( Exception $e ) {
+		trigger_error( $e->getMessage(), E_USER_WARNING );
+		return $caps;
+	}
+
+	if ( $cap === 'delete_post' && ! $provider->supports_asset_delete() ) {
+		$caps = [ 'do_not_allow' ];
+	}
+
+	if ( $cap === 'edit_post' && ! $provider->supports_asset_update() ) {
+		$caps = [ 'do_not_allow' ];
+	}
+
+	return $caps;
 }
 
 function init() : void {
