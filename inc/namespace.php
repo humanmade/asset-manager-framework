@@ -158,8 +158,8 @@ function ajax_select() : void {
 			wp_send_json_error( $attachment_id );
 		}
 
-		add_post_meta( $attachment_id, '_amf_source_url', $selection['url'], true );
-		add_post_meta( $attachment_id, '_amf_provider', $provider->get_id(), true );
+		add_post_meta( $attachment_id, '_amf_source_url', wp_slash( $selection['url'] ), true );
+		add_post_meta( $attachment_id, '_amf_provider', wp_slash( $provider->get_id() ), true );
 
 		if ( ! empty( $selection['alt'] ) ) {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
@@ -218,7 +218,7 @@ function replace_attachment_url( string $url, int $attachment_id ) : string {
 		return $url;
 	}
 
-	return get_post_meta( $attachment_id, '_amf_source_url', true );
+	return wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) );
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
@@ -286,7 +286,7 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 	}
 
 	try {
-		$provider_id = get_post_meta( $attachment->ID, '_amf_provider', true );
+		$provider_id = wp_unslash( get_post_meta( $attachment->ID, '_amf_provider', true ) );
 		return ProviderRegistry::instance()->get( $provider_id );
 	} catch ( Exception $e ) {
 		trigger_error( $e->getMessage(), E_USER_WARNING );
@@ -351,7 +351,7 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
-		'file' => $metadata['file'],
+		'file' => wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ),
 		'width' => intval( $metadata['width'] ),
 		'height' => intval( $metadata['height'] ),
 		'mime-type' => $attachment->post_mime_type,
