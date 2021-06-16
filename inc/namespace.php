@@ -42,8 +42,8 @@ function bootstrap() : void {
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
 
 	// Dynamic image support.
-	add_filter( 'image_downsize', __NAMESPACE__ . '\\dynamic_downsize', 10, 3 );
-	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\dynamic_srcset', 10, 5 );
+	add_filter( 'image_downsize', __NAMESPACE__ . '\\dynamic_downsize', 9, 3 );
+	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\dynamic_srcset', 9, 5 );
 }
 
 function init() : void {
