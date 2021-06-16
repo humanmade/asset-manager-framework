@@ -294,7 +294,7 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 	}
 }
 
-function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
+function fix_media_url( string $url, WP_Post $attachment ) {
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $url;
 	}
@@ -306,7 +306,7 @@ function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
 function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
 	if ( ! empty( $response['sizes'] ) ) {
 		foreach ( $response['sizes'] as $name => $size ) {
-			$response['sizes'][ $name ]['url'] = fix_duplicate_baseurl( $size['url'], $attachment );
+			$response['sizes'][ $name ]['url'] = fix_media_url( $size['url'], $attachment );
 		}
 	}
 
@@ -317,7 +317,7 @@ function fix_srcset_urls( array $sources, array $size_array, string $image_src, 
 	$attachment = get_post( $attachment_id );
 
 	foreach ( $sources as $width => $source ) {
-		$sources[ $width ]['url'] = fix_duplicate_baseurl( $source['url'], $attachment );
+		$sources[ $width ]['url'] = fix_media_url( $source['url'], $attachment );
 	}
 
 	return $sources;
@@ -329,7 +329,7 @@ function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachme
 
 	if ( ! empty( $data['media_details']['sizes'] ) ) {
 		foreach ( $data['media_details']['sizes'] as $name => $size ) {
-			$data['media_details']['sizes'][ $name ]['source_url'] = fix_duplicate_baseurl( $size['source_url'], $attachment );
+			$data['media_details']['sizes'][ $name ]['source_url'] = fix_media_url( $size['source_url'], $attachment );
 		}
 	}
 
