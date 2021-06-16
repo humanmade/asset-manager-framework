@@ -37,6 +37,8 @@ function bootstrap() : void {
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
 	add_filter( 'rest_prepare_attachment', __NAMESPACE__ . '\\fix_rest_attachment_urls', 1000, 3 );
+	add_filter( 'image_get_intermediate_size', __NAMESPACE__ . '\\fix_intermediate_size_url', 1000, 2 );
+	add_filter( 'wp_get_attachment_image_src', __NAMESPACE__ . '\\fix_attachment_image_src', 1000, 2 );
 
 	// Ensure URLs available for missing image sizes.
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
@@ -336,6 +338,23 @@ function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachme
 	$response->set_data( $data );
 
 	return $response;
+}
+
+function fix_attachment_image_src( $image, $attachment_id ) {
+	if ( ! $image ) {
+		return $image;
+	}
+
+	$attachment = get_post( $attachment_id );
+	$image[0] = fix_media_url( $image[0], $attachment );
+	return $image;
+}
+
+
+function fix_intermediate_size_url( array $data, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+	$data['url'] = fix_media_url( $data['url'], $attachment );
+	return $data;
 }
 
 function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
