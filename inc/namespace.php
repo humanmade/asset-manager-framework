@@ -296,13 +296,14 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 	}
 }
 
-function fix_media_url( string $url, WP_Post $attachment ) {
+function fix_media_url( string $url, WP_Post $attachment ) : string {
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $url;
 	}
 
-	$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
-	return $base_url . str_replace( $base_url, '', $url );
+	preg_match( '#https?://(?:.(?!https?://))+$#', $url, $matches );
+
+	return $matches[0] ?? $url;
 }
 
 function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
