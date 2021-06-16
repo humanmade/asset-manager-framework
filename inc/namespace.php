@@ -442,8 +442,12 @@ function dynamic_srcset( array $sources, array $size_array, string $image_src, a
 	}
 
 	foreach ( $sources as $target_width => $data ) {
-		list( $width, $height ) = wp_constrain_dimensions( $size_array[0], $size_array[1], $target_width );
-		$sources[ $target_width ]['url'] = $provider->resize( $attachment, $width, $height, true );
+		if ( $size_array[0] < $target_width ) {
+			unset( $sources[ $target_width ] );
+		} else {
+			list( $width, $height ) = wp_constrain_dimensions( $size_array[0], $size_array[1], $target_width );
+			$sources[ $target_width ]['url'] = $provider->resize( $attachment, $width, $height, true );
+		}
 	}
 
 	return $sources;
