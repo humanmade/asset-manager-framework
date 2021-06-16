@@ -30,10 +30,12 @@ function bootstrap() : void {
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
 
+	// Filter attachment URL.
+	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\replace_attachment_url', 1, 2 );
+
 	// Ensure image URLs are output correctly - WP will prepend the base URL again in some cases.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
-	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\fix_attachment_url', 1000, 2 );
 	add_filter( 'rest_prepare_attachment', __NAMESPACE__ . '\\fix_rest_attachment_urls', 1000, 3 );
 
 	// Ensure URLs available for missing image sizes.
@@ -156,11 +158,12 @@ function ajax_select() : void {
 			wp_send_json_error( $attachment_id );
 		}
 
+		add_post_meta( $attachment_id, '_amf_source_url', $selection['url'], true );
+		add_post_meta( $attachment_id, '_amf_provider', $provider->get_id(), true );
+
 		if ( ! empty( $selection['alt'] ) ) {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
-
-		add_post_meta( $attachment_id, 'amf_provider', $provider->get_id(), true );
 
 		$metadata = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $metadata ) ) {
@@ -209,6 +212,15 @@ function replace_attached_file( $file, int $attachment_id ) : string {
 	return $metadata['file'] ?? '';
 }
 
+function replace_attachment_url( string $url, int $attachment_id ) : string {
+	$attachment = get_post( $attachment_id );
+	if ( ! is_amf_asset( $attachment ) ) {
+		return $url;
+	}
+
+	return get_post_meta( $attachment_id, '_amf_source_url', true );
+}
+
 function get_attachment_by_id( string $id ) :? WP_Post {
 	$query = new WP_Query(
 		[
@@ -224,20 +236,6 @@ function get_attachment_by_id( string $id ) :? WP_Post {
 	}
 
 	return $query->next_post();
-}
-
-function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
-	if ( empty( $attachment ) || ! is_amf_asset( $attachment ) ) {
-		return null;
-	}
-
-	try {
-		$provider_id = get_post_meta( $attachment->ID, 'amf_provider', true );
-		return ProviderRegistry::instance()->get( $provider_id );
-	} catch ( Exception $e ) {
-		trigger_error( $e->getMessage(), E_USER_WARNING );
-		return null;
-	}
 }
 
 function allow_local_media() : bool {
@@ -280,6 +278,20 @@ function ajax_query_attachments() : void {
 
 function is_amf_asset( WP_Post $attachment ) : bool {
 	return strpos( $attachment->post_name, 'amf-' ) === 0;
+}
+
+function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
+	if ( empty( $attachment ) || ! is_amf_asset( $attachment ) ) {
+		return null;
+	}
+
+	try {
+		$provider_id = get_post_meta( $attachment->ID, '_amf_provider', true );
+		return ProviderRegistry::instance()->get( $provider_id );
+	} catch ( Exception $e ) {
+		trigger_error( $e->getMessage(), E_USER_WARNING );
+		return null;
+	}
 }
 
 function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
@@ -345,8 +357,8 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
 		'file' => $metadata['file'],
-		'width' => $metadata['width'],
-		'height' => $metadata['height'],
+		'width' => intval( $metadata['width'] ),
+		'height' => intval( $metadata['height'] ),
 		'mime-type' => $attachment->post_mime_type,
 	];
 
