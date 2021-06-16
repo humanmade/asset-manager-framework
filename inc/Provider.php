@@ -70,8 +70,8 @@ abstract class Provider {
 		return false;
 	}
 
-	public function supports_dynamic_image_resizing() : bool {
-		return false;
+	final public function supports_dynamic_image_resizing() : bool {
+		return is_subclass_of( $this, __NAMESPACE__ . '\\Resizable' );
 	}
 
 	public function supports_filter_search() : bool {
@@ -88,21 +88,6 @@ abstract class Provider {
 
 	public function supports_filter_user() : bool {
 		return true;
-	}
-
-	/**
-	 * Handles resizing of an AMF attachment.
-	 *
-	 * @param WP_Post $attachment The attachment post.
-	 * @param int $width Target width.
-	 * @param int $height Target height.
-	 * @param bool|array $crop If truthy crop to the given dimensions, can be a non-associative
-	 *                         array of x and y positions where x is 'left', 'center' or 'right'
-	 *                         and y is 'top', 'center' or 'bottom'.
-	 * @return string The resized asset URL.
-	 */
-	public function resize( WP_Post $attachment, int $width, int $height, $crop = false ) : string {
-		return $attachment->guid;
 	}
 
 	/**
