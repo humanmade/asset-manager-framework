@@ -127,7 +127,7 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = $provider->supports_dynamic_image_resizing();
+	$supports_dynamic_image_resizing = $provider instanceof Resizable;
 
 	$attachments = [];
 
@@ -407,7 +407,7 @@ function dynamic_downsize( $downsize, int $attachment_id, $size ) {
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
-	if ( empty( $provider ) || ! $provider->supports_dynamic_image_resizing() ) {
+	if ( empty( $provider ) || ! $provider instanceof Resizable ) {
 		return $downsize;
 	}
 
@@ -437,7 +437,7 @@ function dynamic_srcset( array $sources, array $size_array, string $image_src, a
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
-	if ( empty( $provider ) || ! $provider->supports_dynamic_image_resizing() ) {
+	if ( empty( $provider ) || ! $provider instanceof Resizable ) {
 		return $sources;
 	}
 

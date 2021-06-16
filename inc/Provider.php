@@ -69,10 +69,6 @@ abstract class Provider {
 		return false;
 	}
 
-	final public function supports_dynamic_image_resizing() : bool {
-		return is_subclass_of( $this, __NAMESPACE__ . '\\Resizable' );
-	}
-
 	public function supports_filter_search() : bool {
 		return true;
 	}
