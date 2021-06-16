@@ -101,7 +101,7 @@ export function addProviderFilter() {
 	// Override core styles that allow only two filter inputs
 	addInlineStyle( `
 		.media-modal-content .media-frame select.attachment-filters { width: 150px }
-		.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 15px; }
+		.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 25px; }
 	` );
 
 	// Create a new MediaLibraryProviderFilter we later will instantiate
