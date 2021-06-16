@@ -264,13 +264,14 @@ function is_amf_asset( WP_Post $attachment ) : bool {
 	return strpos( $attachment->post_name, 'amf-' ) === 0;
 }
 
-function fix_duplicate_baseurl( string $url, WP_Post $attachment ) {
+function fix_duplicate_baseurl( string $url, WP_Post $attachment ) : string {
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $url;
 	}
 
-	$base_url = str_replace( wp_basename( $attachment->guid ), '', $attachment->guid );
-	return $base_url . str_replace( $base_url, '', $url );
+	preg_match( '#https?://(?:.(?!https?://))+$#', $url, $matches );
+
+	return $matches[0] ?? $url;
 }
 
 function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
