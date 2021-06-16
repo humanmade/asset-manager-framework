@@ -11,7 +11,6 @@ namespace AssetManagerFramework;
 
 use Exception;
 use RangeException;
-use WP_Post;
 use WP_Query;
 
 abstract class Provider {
