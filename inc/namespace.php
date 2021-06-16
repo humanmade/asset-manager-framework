@@ -323,11 +323,6 @@ function fix_srcset_urls( array $sources, array $size_array, string $image_src, 
 	return $sources;
 }
 
-function fix_attachment_url( string $url, int $attachment_id ) : string {
-	$attachment = get_post( $attachment_id );
-	return fix_duplicate_baseurl( $url, $attachment );
-}
-
 function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachment ) : WP_REST_Response {
 
 	$data = $response->get_data();
