@@ -290,13 +290,16 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 		return null;
 	}
 
+	$provider = null;
+
 	try {
 		$provider_id = wp_unslash( get_post_meta( $attachment->ID, '_amf_provider', true ) );
-		return ProviderRegistry::instance()->get( $provider_id );
+		$provider = ProviderRegistry::instance()->get( $provider_id );
 	} catch ( Exception $e ) {
 		trigger_error( $e->getMessage(), E_USER_WARNING );
-		return null;
 	}
+
+	return $provider;
 }
 
 function fix_media_url( string $url, WP_Post $attachment ) : string {
