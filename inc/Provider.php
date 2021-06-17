@@ -69,10 +69,6 @@ abstract class Provider {
 		return false;
 	}
 
-	public function supports_dynamic_image_resizing() : bool {
-		return false;
-	}
-
 	public function supports_filter_search() : bool {
 		return true;
 	}
@@ -90,7 +86,7 @@ abstract class Provider {
 	}
 
 	/**
-	 * Fetches a list of media items that are ultimately used directly by the media managaer.
+	 * Fetches a list of media items that are ultimately used directly by the media manager.
 	 *
 	 * @param array $args Raw query arguments from the POST request in the media manager.
 	 * @throws RangeException Thrown if the provider returns too many media items.

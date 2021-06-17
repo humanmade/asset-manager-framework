@@ -9,6 +9,10 @@ declare( strict_types=1 );
 
 namespace AssetManagerFramework;
 
+use AssetManagerFramework\Interfaces\{
+	Resize
+};
+
 final class ProviderRegistry {
 
 	private static $instance;
@@ -59,7 +63,7 @@ final class ProviderRegistry {
 						'create' => $provider->supports_asset_create(),
 						'update' => $provider->supports_asset_update(),
 						'delete' => $provider->supports_asset_delete(),
-						'dynamicResizing' => $provider->supports_dynamic_image_resizing(),
+						'dynamicResizing' => $provider instanceof Resize,
 						'filterDate' => $provider->supports_filter_date(),
 						'filterSearch' => $provider->supports_filter_search(),
 						'filterType' => $provider->supports_filter_type(),

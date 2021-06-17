@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace AssetManagerFramework;
 
+use AssetManagerFramework\Interfaces\{
+	Resize
+};
 use Exception;
 use WP_Http;
 use WP_Post;
@@ -30,14 +33,22 @@ function bootstrap() : void {
 	// Specify the attached file for our placeholder attachment objects.
 	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
 
+	// Filter attachment URL.
+	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\replace_attachment_url', 1, 2 );
+
 	// Ensure image URLs are output correctly - WP will prepend the base URL again in some cases.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
 	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\fix_srcset_urls', 1000, 5 );
-	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\fix_attachment_url', 1000, 2 );
 	add_filter( 'rest_prepare_attachment', __NAMESPACE__ . '\\fix_rest_attachment_urls', 1000, 3 );
+	add_filter( 'image_get_intermediate_size', __NAMESPACE__ . '\\fix_intermediate_size_url', 1000, 2 );
+	add_filter( 'wp_get_attachment_image_src', __NAMESPACE__ . '\\fix_attachment_image_src', 1000, 2 );
 
-	// Provide fall back URLs for missing image sizes.
+	// Ensure URLs available for missing image sizes.
 	add_filter( 'wp_get_attachment_metadata', __NAMESPACE__ . '\\add_fallback_sizes', 1, 2 );
+
+	// Dynamic image support.
+	add_filter( 'image_downsize', __NAMESPACE__ . '\\dynamic_downsize', 9, 3 );
+	add_filter( 'wp_calculate_image_srcset', __NAMESPACE__ . '\\dynamic_srcset', 9, 5 );
 }
 
 function init() : void {
@@ -121,7 +132,7 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = $provider->supports_dynamic_image_resizing();
+	$supports_dynamic_image_resizing = $provider instanceof Resize;
 
 	$attachments = [];
 
@@ -152,11 +163,12 @@ function ajax_select() : void {
 			wp_send_json_error( $attachment_id );
 		}
 
+		add_post_meta( $attachment_id, '_amf_source_url', wp_slash( $selection['url'] ), true );
+		add_post_meta( $attachment_id, '_amf_provider', wp_slash( $provider->get_id() ), true );
+
 		if ( ! empty( $selection['alt'] ) ) {
 			add_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $selection['alt'] ) );
 		}
-
-		add_post_meta( $attachment_id, 'amf_provider', $provider->get_id(), true );
 
 		$metadata = wp_get_attachment_metadata( $attachment_id, true );
 		if ( ! is_array( $metadata ) ) {
@@ -203,6 +215,15 @@ function replace_attached_file( $file, int $attachment_id ) : string {
 	$metadata = wp_get_attachment_metadata( $attachment_id, true );
 
 	return $metadata['file'] ?? '';
+}
+
+function replace_attachment_url( string $url, int $attachment_id ) : string {
+	$attachment = get_post( $attachment_id );
+	if ( ! is_amf_asset( $attachment ) ) {
+		return $url;
+	}
+
+	return wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) );
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
@@ -260,11 +281,28 @@ function ajax_query_attachments() : void {
 	wp_send_json_success( $items->toArray() );
 }
 
-function is_amf_asset( WP_Post $attachment ) : bool {
-	return strpos( $attachment->post_name, 'amf-' ) === 0;
+function is_amf_asset( ?WP_Post $attachment ) : bool {
+	return ! empty( $attachment ) && strpos( $attachment->post_name, 'amf-' ) === 0;
 }
 
-function fix_duplicate_baseurl( string $url, WP_Post $attachment ) : string {
+function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
+	if ( empty( $attachment ) || ! is_amf_asset( $attachment ) ) {
+		return null;
+	}
+
+	$provider = null;
+
+	try {
+		$provider_id = wp_unslash( get_post_meta( $attachment->ID, '_amf_provider', true ) );
+		$provider = ProviderRegistry::instance()->get( $provider_id );
+	} catch ( Exception $e ) {
+		trigger_error( $e->getMessage(), E_USER_WARNING );
+	}
+
+	return $provider;
+}
+
+function fix_media_url( string $url, WP_Post $attachment ) : string {
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $url;
 	}
@@ -277,7 +315,7 @@ function fix_duplicate_baseurl( string $url, WP_Post $attachment ) : string {
 function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
 	if ( ! empty( $response['sizes'] ) ) {
 		foreach ( $response['sizes'] as $name => $size ) {
-			$response['sizes'][ $name ]['url'] = fix_duplicate_baseurl( $size['url'], $attachment );
+			$response['sizes'][ $name ]['url'] = fix_media_url( $size['url'], $attachment );
 		}
 	}
 
@@ -288,15 +326,10 @@ function fix_srcset_urls( array $sources, array $size_array, string $image_src, 
 	$attachment = get_post( $attachment_id );
 
 	foreach ( $sources as $width => $source ) {
-		$sources[ $width ]['url'] = fix_duplicate_baseurl( $source['url'], $attachment );
+		$sources[ $width ]['url'] = fix_media_url( $source['url'], $attachment );
 	}
 
 	return $sources;
-}
-
-function fix_attachment_url( string $url, int $attachment_id ) : string {
-	$attachment = get_post( $attachment_id );
-	return fix_duplicate_baseurl( $url, $attachment );
 }
 
 function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachment ) : WP_REST_Response {
@@ -305,13 +338,30 @@ function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachme
 
 	if ( ! empty( $data['media_details']['sizes'] ) ) {
 		foreach ( $data['media_details']['sizes'] as $name => $size ) {
-			$data['media_details']['sizes'][ $name ]['source_url'] = fix_duplicate_baseurl( $size['source_url'], $attachment );
+			$data['media_details']['sizes'][ $name ]['source_url'] = fix_media_url( $size['source_url'], $attachment );
 		}
 	}
 
 	$response->set_data( $data );
 
 	return $response;
+}
+
+function fix_attachment_image_src( $image, $attachment_id ) {
+	if ( ! $image ) {
+		return $image;
+	}
+
+	$attachment = get_post( $attachment_id );
+	$image[0] = fix_media_url( $image[0], $attachment );
+	return $image;
+}
+
+
+function fix_intermediate_size_url( array $data, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+	$data['url'] = fix_media_url( $data['url'], $attachment );
+	return $data;
 }
 
 function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
@@ -325,22 +375,11 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		return $metadata;
 	}
 
-	// Return early if provider supports dynamic image resizing.
-	try {
-		$provider_id = get_post_meta( $attachment_id, 'amf_provider', true );
-		$provider = ProviderRegistry::instance()->get( $provider_id );
-		if ( $provider->supports_dynamic_image_resizing() ) {
-			return $metadata;
-		}
-	} catch ( Exception $e ) {
-		return $metadata;
-	}
-
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
-		'file' => $metadata['file'],
-		'width' => $metadata['width'],
-		'height' => $metadata['height'],
+		'file' => wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ),
+		'width' => intval( $metadata['width'] ),
+		'height' => intval( $metadata['height'] ),
 		'mime-type' => $attachment->post_mime_type,
 	];
 
@@ -355,4 +394,87 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 	}
 
 	return $metadata;
+}
+
+function get_valid_dimensions( $size, int $max_width = 0, int $max_height = 0 ) : array {
+	$width = $max_width;
+	$height = $max_height;
+	$crop = false;
+
+	if ( is_array( $size ) ) {
+		$width = $size[0];
+		$height = $size[1];
+		$crop = $size[2] ?? $crop;
+	} else {
+		$all_sizes = wp_get_registered_image_subsizes();
+		if ( ! isset( $all_sizes[ $size ] ) ) {
+			return [ $width, $height, $crop ];
+		}
+
+		$width = $all_sizes[ $size ]['width'];
+		$height = $all_sizes[ $size ]['height'];
+		$crop = $all_sizes[ $size ]['crop'];
+	}
+
+	if ( $crop ) {
+		return array_merge(
+			wp_constrain_dimensions( $width, $height, $max_width, $max_height ),
+			[ $crop ]
+		);
+	}
+
+	$width = min( $width, $max_width );
+	$height = min( $height, $max_height );
+
+	return [ $width, $height, $crop ];
+}
+
+function dynamic_downsize( $downsize, int $attachment_id, $size ) {
+	$attachment = get_post( $attachment_id );
+
+	$provider = get_asset_provider( $attachment );
+	if ( ! $provider instanceof Resize ) {
+		return $downsize;
+	}
+
+	$is_intermediate = false;
+
+	$metadata = wp_get_attachment_metadata( $attachment_id, true );
+	$max_width = $metadata['width'] ?? 0;
+	$max_height = $metadata['height'] ?? 0;
+
+	list( $width, $height, $crop ) = get_valid_dimensions( $size, $max_width, $max_height );
+
+	if ( ( $width < $max_width ) || ( $height < $max_height ) ) {
+		$is_intermediate = true;
+	}
+
+	$url = $provider->resize( $attachment, $width, $height, $crop );
+
+	return [
+		$url,
+		$width,
+		$height,
+		$is_intermediate,
+	];
+}
+
+function dynamic_srcset( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ) : array {
+	$attachment = get_post( $attachment_id );
+
+	$provider = get_asset_provider( $attachment );
+	if ( ! $provider instanceof Resize ) {
+		return $sources;
+	}
+
+	foreach ( $sources as $target_width => $data ) {
+		if ( $size_array[0] < $target_width ) {
+			unset( $sources[ $target_width ] );
+		} else {
+			list( $width, $height ) = wp_constrain_dimensions( $size_array[0], $size_array[1], $target_width );
+			$sources[ $target_width ]['url'] = $provider->resize( $attachment, $width, $height, true );
+		}
+	}
+
+	return $sources;
 }
