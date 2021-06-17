@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace AssetManagerFramework;
 
+use AssetManagerFramework\Interfaces\{
+	Resize
+};
 use Exception;
 use WP_Http;
 use WP_Post;
@@ -129,7 +132,7 @@ function ajax_select() : void {
 		wp_send_json_error();
 	}
 
-	$supports_dynamic_image_resizing = $provider instanceof Resizable;
+	$supports_dynamic_image_resizing = $provider instanceof Resize;
 
 	$attachments = [];
 
@@ -278,8 +281,8 @@ function ajax_query_attachments() : void {
 	wp_send_json_success( $items->toArray() );
 }
 
-function is_amf_asset( WP_Post $attachment ) : bool {
-	return strpos( $attachment->post_name, 'amf-' ) === 0;
+function is_amf_asset( ?WP_Post $attachment ) : bool {
+	return ! empty( $attachment ) && strpos( $attachment->post_name, 'amf-' ) === 0;
 }
 
 function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
@@ -427,7 +430,7 @@ function dynamic_downsize( $downsize, int $attachment_id, $size ) {
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
-	if ( empty( $provider ) || ! $provider instanceof Resizable ) {
+	if ( ! $provider instanceof Resize ) {
 		return $downsize;
 	}
 
@@ -457,7 +460,7 @@ function dynamic_srcset( array $sources, array $size_array, string $image_src, a
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
-	if ( empty( $provider ) || ! $provider instanceof Resizable ) {
+	if ( ! $provider instanceof Resize ) {
 		return $sources;
 	}
 

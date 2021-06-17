@@ -7,11 +7,11 @@
 
 declare( strict_types=1 );
 
-namespace AssetManagerFramework;
+namespace AssetManagerFramework\Interfaces;
 
 use WP_Post;
 
-interface Resizable {
+interface Resize {
 
 	/**
 	 * Handles resizing of an AMF attachment.
