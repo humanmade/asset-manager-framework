@@ -1,6 +1,6 @@
 <?php
 /**
- * Resizable interface.
+ * Resize interface.
  *
  * @package asset-manager-framework
  */
