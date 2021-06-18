@@ -217,13 +217,13 @@ function replace_attached_file( $file, int $attachment_id ) : string {
 	return $metadata['file'] ?? '';
 }
 
-function replace_attachment_url( string $url, int $attachment_id ) : string {
+function replace_attachment_url( $url, int $attachment_id ) : string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
-		return $url;
+		return $url ?: '';
 	}
 
-	return wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) );
+	return wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ?: '' );
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
@@ -302,14 +302,14 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 	return $provider;
 }
 
-function fix_media_url( string $url, WP_Post $attachment ) : string {
-	if ( ! is_amf_asset( $attachment ) ) {
-		return $url;
+function fix_media_url( $url, WP_Post $attachment ) : string {
+	if ( empty( $url ) || ! is_amf_asset( $attachment ) ) {
+		return $url ?: '';
 	}
 
-	preg_match( '#https?://(?:.(?!https?://))+$#', $url, $matches );
+	preg_match( '#https?://(?:.(?!https?://))+$#', (string) $url, $matches );
 
-	return $matches[0] ?? $url;
+	return $matches[0] ?? '';
 }
 
 function fix_media_size_urls( array $response, WP_Post $attachment ) : array {
