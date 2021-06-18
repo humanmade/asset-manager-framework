@@ -375,6 +375,10 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		return $metadata;
 	}
 
+	if ( ! isset( $metadata['sizes'] ) ) {
+		$metadata['sizes'] = [];
+	}
+
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
 		'file' => wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ),
