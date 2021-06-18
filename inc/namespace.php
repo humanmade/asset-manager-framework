@@ -383,10 +383,10 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		'mime-type' => $attachment->post_mime_type,
 	];
 
-	$missing_sizes = array_diff(
+	$missing_sizes = isset( $metadata['sizes'] ) ? array_diff(
 		get_intermediate_image_sizes(),
 		array_keys( $metadata['sizes'] )
-	);
+	) : get_intermediate_image_sizes();
 
 	// Populate missing image sizes from original.
 	foreach ( $missing_sizes as $size ) {
