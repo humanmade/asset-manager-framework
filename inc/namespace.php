@@ -336,7 +336,7 @@ function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachme
 
 	$data = $response->get_data();
 
-	if ( ! empty( $data['media_details'] ) && is_array( $data['media_details'] ) && ! empty( $data['media_details']['sizes'] ) && is_array( $data['media_details']['sizes'] ) ) {
+	if ( ! empty( $data['media_details']['sizes'] ) && is_array( $data['media_details']['sizes'] ) ) {
 		foreach ( $data['media_details']['sizes'] as $name => $size ) {
 			$data['media_details']['sizes'][ $name ]['source_url'] = fix_media_url( $size['source_url'], $attachment );
 		}
