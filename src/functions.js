@@ -39,7 +39,7 @@ export function get_click_handler( item ) {
 		}
 
 		// Get the current provider.
-		const provider = state.get( 'library' ).props.get( 'provider' ) || AMF_DATA.providers[0]?.id;
+		const provider = state.get( 'library' )?.props.get( 'provider' ) || AMF_DATA.providers[0]?.id;
 		if ( ! provider ) {
 			alert( 'No provider found!' );
 			return;
