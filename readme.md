@@ -153,6 +153,7 @@ Local media is supported by default and can be used side by side with any additi
 
 1. Defining the `AMF_ALLOW_LOCAL_MEDIA` constant as a boolean
 2. Use the `amf/allow_local_media` filter to return a boolean
+3. Use the `amf/local_provider/name` filter to change the `Local Media` label.
 
 The filter will take precedence over the constant.
 
