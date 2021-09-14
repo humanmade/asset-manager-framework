@@ -15,7 +15,7 @@ class LocalProvider extends Provider {
 	}
 
 	public function get_name() : string {
-		return __( 'Local Media', 'asset-manager-framework' );
+		return apply_filters( 'amf/local_provider/name', __( 'Local Media', 'asset-manager-framework' ) );
 	}
 
 	protected function request( array $args ) : MediaList {
