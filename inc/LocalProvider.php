@@ -18,11 +18,11 @@ class LocalProvider extends Provider {
 		return apply_filters( 'amf/local_provider/name', __( 'Local Media', 'asset-manager-framework' ) );
 	}
 
-	protected function request( array $args ) : MediaList {
+	protected function request( array $args ) : MediaResponse {
 		// Call the default core attachment query AJAX handler.
 		// This will return JSON and exit before the return statement below.
 		wp_ajax_query_attachments();
-		return new MediaList();
+		return new MediaResponse( new MediaList(), 1, 1 );
 	}
 
 	public function supports_asset_create() : bool {
