@@ -138,6 +138,10 @@ abstract class Provider {
 		$args['paged'] = intval( $args['paged'] ?? 1 );
 
 		$response = $this->request( $args );
+
+		// Send headers for media library pagination.
+		$this->send_pagination_headers( $response );
+
 		$items = $response->get_items();
 		$array = $items->toArray();
 
@@ -223,6 +227,20 @@ abstract class Provider {
 		}
 
 		return $response['http_response'];
+	}
+
+	/**
+	 * Sends the pagination headers for the media response.
+	 *
+	 * @param MediaResponse $response The media response object.
+	 * @return void
+	 */
+	final protected function send_pagination_headers( MediaResponse $response ) {
+		if ( headers_sent() ) {
+			return;
+		}
+		header( sprintf( 'X-WP-Total: %d', $response->get_total() ) );
+		header( sprintf( 'X-WP-TotalPages: %d', $response->get_total_pages() ) );
 	}
 
 }

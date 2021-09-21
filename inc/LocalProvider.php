@@ -22,7 +22,7 @@ class LocalProvider extends Provider {
 		// Call the default core attachment query AJAX handler.
 		// This will return JSON and exit before the return statement below.
 		wp_ajax_query_attachments();
-		return new MediaResponse( new MediaList(), 1, 1 );
+		return new MediaResponse();
 	}
 
 	public function supports_asset_create() : bool {
