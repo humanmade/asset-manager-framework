@@ -85,6 +85,7 @@ use AssetManagerFramework\{
 	ProviderRegistry
 	Provider,
 	MediaList,
+	MediaResponse,
 	Image
 };
 
@@ -98,7 +99,7 @@ class KittenProvider extends Provider {
 		return __( 'Place Kitten' );
 	}
 
-	protected function request( array $args ) : MediaList {
+	protected function request( array $args ) : MediaResponse {
 		$kittens = [
 			500 => 'Boop',
 			600 => 'Fuzzy',
@@ -119,7 +120,11 @@ class KittenProvider extends Provider {
 			$items[] = $item;
 		}
 
-		return new MediaList( ...$items );
+		return new MediaResponse(
+			new MediaList( ...$items ),
+			count( $kittens ), // Total number of available results.
+			count( $Kittens )  // Number of items requested per page.
+		);
 	}
 
 }
@@ -132,6 +137,8 @@ add_action( 'amf/register_providers', function ( ProviderRegistry $provider_regi
 Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
+
+The `MediaResponse` object takes a `MediaList` along with the total number of available items and the number of items requested per page. This is to ensure pagination in the media library (introduced in WordPress 5.8) works.
 
 You also have access to provider instances during registration via the `amf/provider` filter, so you could use it to decorate providers:
 
