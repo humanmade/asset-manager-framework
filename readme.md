@@ -123,7 +123,7 @@ class KittenProvider extends Provider {
 		return new MediaResponse(
 			new MediaList( ...$items ),
 			count( $kittens ), // Total number of available results.
-			count( $Kittens )  // Number of items requested per page.
+			count( $kittens )  // Number of items requested per page.
 		);
 	}
 

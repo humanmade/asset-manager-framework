@@ -35,10 +35,10 @@ class MediaResponse {
 	/**
 	 * Sets up the MediaResponse object.
 	 *
-	 * @param MediaList|null $media_list The list of returned items.
-	 * @param integer $total The total number of results available.
-	 * @param integer $per_page The number of items requested per page, defaults to 40 in
-	 *                          media modal requests.
+	 * @param ?MediaList $media_list The list of returned items.
+	 * @param int $total The total number of results available.
+	 * @param int $per_page The number of items requested per page, defaults to 40 in media
+	 *                      modal requests.
 	 */
 	public function __construct( ?MediaList $media_list = null, int $total = 0, int $per_page = 40 ) {
 		$this->media_list = $media_list ?? new MediaList();
