@@ -11,6 +11,7 @@ namespace AssetManagerFramework;
 
 use Exception;
 use RangeException;
+use WP_HTTP_Requests_Response;
 use WP_Query;
 
 abstract class Provider {
@@ -49,9 +50,10 @@ abstract class Provider {
 	 *     @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
 	 * }
 	 * @throws Exception Thrown if an unrecoverable error occurs.
-	 * @return MediaList The collection of Media items. Can be an empty collection if there are no matching results.
+	 * @return MediaResponse The response object containing pagination data and list of Media items.
+	 *                       Can be an empty collection if there are no matching results.
 	 */
-	abstract protected function request( array $args ) : MediaList;
+	abstract protected function request( array $args ) : MediaResponse;
 
 	public function supports_asset_create() : bool {
 		return false;
@@ -135,7 +137,12 @@ abstract class Provider {
 
 		$args['paged'] = intval( $args['paged'] ?? 1 );
 
-		$items = $this->request( $args );
+		$response = $this->request( $args );
+
+		// Send headers for media library pagination.
+		$this->send_pagination_headers( $response );
+
+		$items = $response->get_items();
 		$array = $items->toArray();
 
 		if ( ! $array ) {
@@ -182,9 +189,9 @@ abstract class Provider {
 	 * @param string $url The URL for the request.
 	 * @param array  $args The arguments to pass to `wp_remote_request()`.
 	 * @throws Exception Thrown if there is an error with the request or its response code is not 200.
-	 * @return string The response body.
+	 * @return WP_HTTP_Requests_Response The response object.
 	 */
-	final public function remote_request( string $url, array $args ) : string {
+	final public function remote_request( string $url, array $args ) : WP_HTTP_Requests_Response {
 		$response = wp_remote_request(
 			$url,
 			$args
@@ -202,7 +209,6 @@ abstract class Provider {
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$response_message = wp_remote_retrieve_response_message( $response );
-		$response_body = wp_remote_retrieve_body( $response );
 
 		if ( 200 !== $response_code ) {
 			$message = sprintf(
@@ -220,7 +226,21 @@ abstract class Provider {
 			);
 		}
 
-		return $response_body;
+		return $response['http_response'];
+	}
+
+	/**
+	 * Sends the pagination headers for the media response.
+	 *
+	 * @param MediaResponse $response The media response object.
+	 * @return void
+	 */
+	final protected function send_pagination_headers( MediaResponse $response ) {
+		if ( headers_sent() ) {
+			return;
+		}
+		header( sprintf( 'X-WP-Total: %d', $response->get_total() ) );
+		header( sprintf( 'X-WP-TotalPages: %d', $response->get_total_pages() ) );
 	}
 
 }
