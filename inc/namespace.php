@@ -438,7 +438,11 @@ function get_valid_dimensions( $size, int $max_width = 0, int $max_height = 0 ) 
 	return [ $width, $height, $crop ];
 }
 
-function dynamic_downsize( $downsize, int $attachment_id, $size ) {
+function dynamic_downsize( $downsize, $attachment_id, $size ) {
+	if ( ! $attachment_id ) {
+		return $downsize;
+	}
+	
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
