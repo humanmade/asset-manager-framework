@@ -222,13 +222,22 @@ function replace_attached_file( $file, int $attachment_id ) : string {
 	return $metadata['file'] ?? '';
 }
 
+/**
+ * Replaces the URL for the attachment on the `wp_get_attachment_url` filter
+ *
+ * @param string|mixed $url The current URL being filtered
+ * @param integer $attachment_id the ID of the attachment
+ * @return string the new URL
+ */
 function replace_attachment_url( $url, int $attachment_id ) : string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $url ?: '';
 	}
 
-	return wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ?: '' );
+	$meta_url = get_post_meta( $attachment_id, '_amf_source_url', true );
+
+	return wp_unslash(  $meta_url ?: $url );
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
