@@ -393,9 +393,12 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		$metadata['sizes'] = [];
 	}
 
+	$source_url = get_post_meta( $attachment_id, '_amf_source_url', true )
+		?: wp_get_attachment_image_url( $attachment_id, 'full' );
+
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
-		'file' => wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) ),
+		'file' => wp_unslash( $source_url ),
 		'width' => intval( $metadata['width'] ),
 		'height' => intval( $metadata['height'] ),
 		'mime-type' => $attachment->post_mime_type,
@@ -451,7 +454,7 @@ function dynamic_downsize( $downsize, $attachment_id, $size ) {
 	if ( ! $attachment_id ) {
 		return $downsize;
 	}
-	
+
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
