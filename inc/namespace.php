@@ -211,7 +211,7 @@ function ajax_select() : void {
 	wp_send_json_success( $attachments );
 }
 
-function replace_attached_file( $file, int $attachment_id ) : string {
+function replace_attached_file( $file, int $attachment_id ) {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $file;
@@ -442,7 +442,7 @@ function dynamic_downsize( $downsize, $attachment_id, $size ) {
 	if ( ! $attachment_id ) {
 		return $downsize;
 	}
-	
+
 	$attachment = get_post( $attachment_id );
 
 	$provider = get_asset_provider( $attachment );
