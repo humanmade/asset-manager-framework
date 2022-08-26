@@ -12,15 +12,19 @@
 	],
 	"config": {
 		"sort-packages": true,
-		"preferred-install": "dist"
+		"preferred-install": "dist",
+		"allow-plugins": {
+			"composer/installers": true,
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
 	},
 	"require": {
 		"php": ">=7.2",
-		"composer/installers": "~1.0"
+		"composer/installers": "~1.0 || ~2.0"
 	},
 	"require-dev": {
 		"automattic/phpcs-neutron-ruleset": "^3.2",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.6.0",
+		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
 		"phpcompatibility/phpcompatibility-wp": "~2.1.0",
 		"wp-coding-standards/wpcs": "~2.2.0"
 	},
