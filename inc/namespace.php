@@ -214,7 +214,7 @@ function ajax_select() : void {
 function replace_attached_file( $file, int $attachment_id ) : string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
-		return ( $file ? $file : '' );
+		return $file;
 	}
 
 	$metadata = wp_get_attachment_metadata( $attachment_id, true );
