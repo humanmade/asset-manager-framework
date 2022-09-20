@@ -397,9 +397,18 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		array_keys( $metadata['sizes'] )
 	);
 
-	// Populate missing image sizes from original.
+	// List all currently registered image sub-sizes.
+	$registered_images = wp_get_registered_image_subsizes();
+
+	// Populate missing image sizes with the registered image size values.
 	foreach ( $missing_sizes as $size ) {
-		$metadata['sizes'][ $size ] = $fallback_size;
+		if ( isset( $registered_images[$size] ) ) {
+			$metadata['sizes'][ $size ] = $registered_images[$size];
+			$metadata['sizes'][ $size ]['file'] = wp_unslash( get_post_meta( $attachment_id, '_amf_source_url', true ) );
+			$metadata['sizes'][ $size ]['mime-type'] = $attachment->post_mime_type;
+		} else {
+			$metadata['sizes'][ $size ] = $fallback_size;
+		}
 	}
 
 	return $metadata;
