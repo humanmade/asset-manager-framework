@@ -103,7 +103,6 @@ function enqueue_scripts() : void {
 }
 
 function ajax_select() : void {
-
 	try {
 		$provider = ProviderRegistry::instance()->get( $_REQUEST['provider'] ?? '' );
 	} catch ( Exception $e ) {
@@ -230,24 +229,20 @@ function maybe_replace_attached_file( $file, int $attachment_id ) {
  * @return string the new URL
  */
 function maybe_replace_attachment_url( $url, int $attachment_id ) : string {
-	$source_url = get_amf_source_url( $attachment_id );
-	if ( ! empty( $source_url ) ) {
-		return $source_url;
-	}
-
-	return $url;
+	return get_amf_source_url( $attachment_id, $url );
 }
 
 /**
  * Returns the AMF source URL of AMF assets, or an empty string for non-AMF assets
  *
- * @param integer $attachment_id the ID of the attachment to fetch source URL for
+ * @param integer $attachment_id the ID of the attachment to fetch source URL for attachment
+ * @param string|null $fallback_url a fallback URL if it's not an AMF asset
  * @return string|null the source URL or null
  */
-function get_amf_source_url( int $attachment_id ) :? string {
+function get_amf_source_url( int $attachment_id, string $fallback_url = null ) :? string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
-		return null;
+		return $fallback_url;
 	}
 
 	$meta_url = get_post_meta( $attachment_id, '_amf_source_url', true );
@@ -255,7 +250,7 @@ function get_amf_source_url( int $attachment_id ) :? string {
 		return wp_unslash(  $meta_url );
 	}
 
-	return null;
+	return $fallback_url;
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
@@ -365,7 +360,6 @@ function fix_srcset_urls( array $sources, array $size_array, string $image_src, 
 }
 
 function fix_rest_attachment_urls( WP_REST_Response $response, WP_Post $attachment ) : WP_REST_Response {
-
 	$data = $response->get_data();
 
 	if ( ! empty( $data['media_details'] ) && is_array( $data['media_details'] ) && ! empty( $data['media_details']['sizes'] ) && is_array( $data['media_details']['sizes'] ) ) {
@@ -389,7 +383,6 @@ function fix_attachment_image_src( $image, $attachment_id ) {
 	return $image;
 }
 
-
 function fix_intermediate_size_url( array $data, int $attachment_id ) : array {
 	$attachment = get_post( $attachment_id );
 	$data['url'] = fix_media_url( $data['url'], $attachment );
@@ -411,7 +404,7 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		$metadata['sizes'] = [];
 	}
 
-	$source_url = get_amf_source_url( $attachment_id ) ?:  $attachment->guid;
+	$source_url = get_amf_source_url( $attachment_id, $attachment->guid );
 
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
