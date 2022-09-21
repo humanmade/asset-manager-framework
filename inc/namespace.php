@@ -31,10 +31,10 @@ function bootstrap() : void {
 	add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
 
 	// Specify the attached file for our placeholder attachment objects.
-	add_filter( 'get_attached_file', __NAMESPACE__ . '\\replace_attached_file', 10, 2 );
+	add_filter( 'get_attached_file', __NAMESPACE__ . '\\maybe_replace_attached_file', 10, 2 );
 
 	// Filter attachment URL.
-	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\replace_attachment_url', 1, 2 );
+	add_filter( 'wp_get_attachment_url', __NAMESPACE__ . '\\maybe_replace_attachment_url', 1, 2 );
 
 	// Ensure image URLs are output correctly - WP will prepend the base URL again in some cases.
 	add_filter( 'wp_prepare_attachment_for_js', __NAMESPACE__ . '\\fix_media_size_urls', 1000, 2 );
@@ -211,7 +211,7 @@ function ajax_select() : void {
 	wp_send_json_success( $attachments );
 }
 
-function replace_attached_file( $file, int $attachment_id ) : string {
+function maybe_replace_attached_file( $file, int $attachment_id ) : string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $file;
@@ -229,7 +229,7 @@ function replace_attached_file( $file, int $attachment_id ) : string {
  * @param integer $attachment_id the ID of the attachment
  * @return string the new URL
  */
-function replace_attachment_url( $url, int $attachment_id ) : string {
+function maybe_replace_attachment_url( $url, int $attachment_id ) : string {
 	$source_url = get_amf_source_url( $attachment_id );
 	if ( ! empty( $source_url ) ) {
 		return $source_url;
@@ -242,16 +242,20 @@ function replace_attachment_url( $url, int $attachment_id ) : string {
  * Returns the AMF source URL of AMF assets, or an empty string for non-AMF assets
  *
  * @param integer $attachment_id the ID of the attachment to fetch source URL for
- * @return string|bool the source URL or an empty string
+ * @return string|null the source URL or null
  */
-function get_amf_source_url( int $attachment_id ) {
+function get_amf_source_url( int $attachment_id ) :? string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
-		return false;
+		return null;
 	}
 
 	$meta_url = get_post_meta( $attachment_id, '_amf_source_url', true );
-	return wp_unslash(  $meta_url ?: false );
+	if ( ! empty( $meta_url ) ) {
+		return wp_unslash(  $meta_url );
+	}
+
+	return null;
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
