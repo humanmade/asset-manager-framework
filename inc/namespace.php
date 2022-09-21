@@ -211,7 +211,7 @@ function ajax_select() : void {
 	wp_send_json_success( $attachments );
 }
 
-function maybe_replace_attached_file( $file, int $attachment_id ) : string {
+function maybe_replace_attached_file( $file, int $attachment_id ) {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $file;
