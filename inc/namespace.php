@@ -230,14 +230,28 @@ function replace_attached_file( $file, int $attachment_id ) : string {
  * @return string the new URL
  */
 function replace_attachment_url( $url, int $attachment_id ) : string {
+	$source_url = get_amf_source_url( $attachment_id );
+	if ( ! empty( $source_url ) ) {
+		return $source_url;
+	}
+
+	return $url;
+}
+
+/**
+ * Returns the AMF source URL of AMF assets, or an empty string for non-AMF assets
+ *
+ * @param integer $attachment_id the ID of the attachment to fetch source URL for
+ * @return string|bool the source URL or an empty string
+ */
+function get_amf_source_url( int $attachment_id ) {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
-		return $url ?: '';
+		return false;
 	}
 
 	$meta_url = get_post_meta( $attachment_id, '_amf_source_url', true );
-
-	return wp_unslash(  $meta_url ?: $url );
+	return wp_unslash(  $meta_url ?: false );
 }
 
 function get_attachment_by_id( string $id ) :? WP_Post {
@@ -393,8 +407,7 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		$metadata['sizes'] = [];
 	}
 
-	$source_url = get_post_meta( $attachment_id, '_amf_source_url', true )
-		?: $attachment->guid;
+	$source_url = get_amf_source_url( $attachment_id ) ?:  $attachment->guid;
 
 	// Use the full size if available or create a fallback from the main file metadata.
 	$fallback_size = $metadata['sizes']['full'] ?? [
