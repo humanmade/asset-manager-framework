@@ -400,10 +400,11 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 	// Populate missing image sizes with the registered image size values.
 	foreach ( $missing_sizes as $size ) {
 
+		// Determine if the image supports resizing and retrieve the image's size and the correct url.
 		$image = dynamic_downsize( false, $attachment_id, $size );
 
-		// check the image attributes are set first ( url, width & height ).
-		if ( $image && isset( $image[0] ) && isset( $image[1] ) && isset( $image[2] ) ) {
+		// Check the image attributes are set first ( url, width & height ).
+		if ( is_array( $image ) ) {
 			$metadata['sizes'][ $size ]['file'] = wp_unslash( $image[0] );
 			$metadata['sizes'][ $size ]['width'] = $image[1];
 			$metadata['sizes'][ $size ]['height'] = $image[2];
