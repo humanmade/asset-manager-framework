@@ -402,7 +402,7 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 
 		$image = dynamic_downsize( false, $attachment_id, $size );
 
-		if ( $image ) {
+		if ( $image && isset( $image[0] ) && isset( $image[1] ) && isset( $image[2] ) ) {
 			$metadata['sizes'][ $size ]['file'] = wp_unslash( $image[0] );
 			$metadata['sizes'][ $size ]['width'] = $image[1];
 			$metadata['sizes'][ $size ]['height'] = $image[2];
