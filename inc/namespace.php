@@ -400,7 +400,7 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 	// Populate missing image sizes with the registered image size values.
 	foreach ( $missing_sizes as $size ) {
 
-		// Determine if the image supports resizing and retrieve the image's size and the correct url.
+		// Determine if the image supports resizing and retrieve the image's size and the resized url.
 		$image = dynamic_downsize( false, $attachment_id, $size );
 
 		// Check the image attributes are set first ( url, width & height ).
