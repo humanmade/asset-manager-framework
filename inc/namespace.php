@@ -419,9 +419,21 @@ function add_fallback_sizes( array $metadata, int $attachment_id ) : array {
 		array_keys( $metadata['sizes'] )
 	);
 
-	// Populate missing image sizes from original.
+	// Populate missing image sizes with the registered image size values.
 	foreach ( $missing_sizes as $size ) {
-		$metadata['sizes'][ $size ] = $fallback_size;
+
+		// Determine if the image supports resizing and retrieve the image's size and the resized url.
+		$image = dynamic_downsize( false, $attachment_id, $size );
+
+		// Check the image attributes are set first ( url, width & height ).
+		if ( is_array( $image ) && isset( $image[0], $image[1], $image[2] ) ) {
+			$metadata['sizes'][ $size ]['file'] = wp_unslash( $image[0] );
+			$metadata['sizes'][ $size ]['width'] = $image[1];
+			$metadata['sizes'][ $size ]['height'] = $image[2];
+			$metadata['sizes'][ $size ]['mime-type'] = $attachment->post_mime_type;
+		} else {
+			$metadata['sizes'][ $size ] = $fallback_size;
+		}
 	}
 
 	return $metadata;
