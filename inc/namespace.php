@@ -153,7 +153,7 @@ function ajax_select() : void {
 			'post_excerpt' => $selection['caption'],
 			'post_mime_type' => $mime_type,
 			'guid' => $selection['url'],
-			'meta_input' => $selection['meta'],
+			'meta_input' => $selection['meta'] ?? [],
 		];
 
 		$attachment_id = wp_insert_attachment( $args, false, 0, true );
