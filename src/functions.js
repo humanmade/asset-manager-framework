@@ -109,6 +109,12 @@ export function addProviderFilter() {
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
+			if ( this.options.controller._state === 'gallery-edit' ) {
+				this.$el.hide();
+			} else {
+				this.$el.show();
+			}
+
 			this.filters = providers.reduce( ( filters, { id, name } ) => {
 				filters[ id ] = {
 					text: name,
