@@ -63,16 +63,12 @@ export function get_click_handler( item ) {
 		).done( response => {
 			Object.keys(response).forEach( key => {
 				selection_state.get( key ).set( 'id', response[ key ] );
-			});
-
+			} );
 			event.target.disabled = false;
-
 			click_handler();
 		} ).fail( response => {
 			const message = response?.[0]?.message || 'An unknown error occurred.';
-
 			alert( message );
-
 			event.target.disabled = false;
 		} );
 	}
@@ -105,7 +101,7 @@ export function addProviderFilter() {
 	` );
 
 	// Create a new MediaLibraryProviderFilter we later will instantiate
-	var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend({
+	var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend ( {
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
@@ -133,13 +129,13 @@ export function addProviderFilter() {
 			_.find( this.filters, function( filter, id ) {
 				const equal = _.all( filter.props, function( prop, key ) {
 					return prop === ( props?.[ key ] || null );
-				});
+				} );
 
 				if ( equal ) {
 					value = id;
 					return value;
 				}
-			});
+			} );
 
 			this.$el.val( value );
 
@@ -149,25 +145,25 @@ export function addProviderFilter() {
 				toggleUI( provider.supports );
 			}
 		}
-	});
+	} );
 
 	// Extend and override wp.media.view.AttachmentsBrowser to include our new filter
 	var AttachmentsBrowser = wp.media.view.AttachmentsBrowser;
-	wp.media.view.AttachmentsBrowser = wp.media.view.AttachmentsBrowser.extend({
+	wp.media.view.AttachmentsBrowser = wp.media.view.AttachmentsBrowser.extend( {
 		createToolbar: function() {
 			// Make sure to load the original toolbar
 			AttachmentsBrowser.prototype.createToolbar.call( this );
-			this.toolbar.set( 'MediaLibraryProviderFilter', new MediaLibraryProviderFilter({
+			this.toolbar.set( 'MediaLibraryProviderFilter', new MediaLibraryProviderFilter( {
 				controller: this.controller,
 				model:      this.collection.props,
 				priority: -75
-			}).render() );
+			} ).render() );
 		}
-	});
+	} );
 }
 
 export function addInlineStyle( styles ) {
-	var css = document.createElement('style');
+	var css = document.createElement( 'style' );
 	css.type = 'text/css';
 
 	if ( css.styleSheet ) {
