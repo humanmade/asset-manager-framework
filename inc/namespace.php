@@ -295,9 +295,16 @@ function ajax_query_attachments() : void {
 		wp_send_json_error();
 	}
 	
-	// If no provider is specified and several posts are being requested,
+	// If no provider is specified and WP attachment IDs are referenced,
 	// call the original AJAX handler, it's probably a gallery.
-	if ( empty( $args['provider'] ) && !empty( $args['post__in'] ) ) {
+	if (
+		empty( $args['provider'] ) &&
+		(
+			isset( $args['post__in'] ) ||
+			isset( $args['post__not_in'] ) ||
+			isset( $args['post_parent'] )
+		)
+	) {
 		wp_ajax_query_attachments();
 	}
 
