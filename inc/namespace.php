@@ -329,7 +329,7 @@ function get_asset_provider( ?WP_Post $attachment ) : ?Provider {
 	return $provider;
 }
 
-function fix_media_url( $url, WP_Post $attachment ) : string {
+function fix_media_url( $url, ?WP_Post $attachment ) : string {
 	if ( empty( $url ) || ! is_amf_asset( $attachment ) ) {
 		return $url ?: '';
 	}
