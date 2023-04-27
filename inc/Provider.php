@@ -40,7 +40,7 @@ abstract class Provider {
 	 *     Arguments for the request for media items, typically coming directly from the media manager filters.
 	 *
 	 *     @type int      $paged          The page number of the results.
-	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40.
+	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40 or 80.
 	 *     @type string   $s              Optional. The search query.
 	 *     @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
 	 *     @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
