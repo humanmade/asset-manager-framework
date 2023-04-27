@@ -136,6 +136,8 @@ Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
 
+The `MediaList` object takes a list of `Media` items (`Image`, `Audio`, `Video`, or `Document`). The total number of available results should be provided to the `set_total()` method to ensure pagination in the media library works.
+
 You also have access to provider instances during registration via the `amf/provider` filter, so you could use it to decorate providers:
 
 ```php
