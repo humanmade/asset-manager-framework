@@ -305,6 +305,25 @@ function ajax_query_attachments() : void {
 		);
 	}
 
+	if ( ! headers_sent() ) {
+		$total_pages = ! empty( $args['posts_per_page'] )
+			? ceil( $items->get_total() / $args['posts_per_page'] )
+			: 0;
+
+		header(
+			sprintf(
+				'X-WP-Total: %d',
+				$items->get_total()
+			)
+		);
+		header(
+			sprintf(
+				'X-WP-TotalPages: %d',
+				$total_pages
+			)
+		);
+	}
+
 	wp_send_json_success( $items->toArray() );
 }
 

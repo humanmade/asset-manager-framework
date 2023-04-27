@@ -50,10 +50,10 @@ abstract class Provider {
 	 *     @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
 	 * }
 	 * @throws Exception Thrown if an unrecoverable error occurs.
-	 * @return MediaResponse The response object containing pagination data and list of Media items.
-	 *                       Can be an empty collection if there are no matching results.
+	 * @return MediaList The response object containing pagination data and list of Media items.
+	 *                   Can be an empty collection if there are no matching results.
 	 */
-	abstract protected function request( array $args ) : MediaResponse;
+	abstract protected function request( array $args ) : MediaList;
 
 	public function supports_asset_create() : bool {
 		return false;
@@ -137,12 +137,7 @@ abstract class Provider {
 
 		$args['paged'] = intval( $args['paged'] ?? 1 );
 
-		$response = $this->request( $args );
-
-		// Send headers for media library pagination.
-		$this->send_pagination_headers( $response );
-
-		$items = $response->get_items();
+		$items = $this->request( $args );
 		$array = $items->toArray();
 
 		if ( ! $array ) {
@@ -228,19 +223,4 @@ abstract class Provider {
 
 		return $response['http_response'];
 	}
-
-	/**
-	 * Sends the pagination headers for the media response.
-	 *
-	 * @param MediaResponse $response The media response object.
-	 * @return void
-	 */
-	final protected function send_pagination_headers( MediaResponse $response ) {
-		if ( headers_sent() ) {
-			return;
-		}
-		header( sprintf( 'X-WP-Total: %d', $response->get_total() ) );
-		header( sprintf( 'X-WP-TotalPages: %d', $response->get_total_pages() ) );
-	}
-
 }
