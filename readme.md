@@ -152,7 +152,7 @@ This is useful, for example, when you are using a third-party provider implement
 
 ## Total Result Count
 
-It may be that it's impossible for your media provider to return a total count of results available for a given query. In this case you can return a count which is greater than the number of results requested per page multiplied by the next page number. This will result in the WordPress media manager always showing a "Load more" button after loading each page of results.
+It may be that it's not practical for your media provider to provide a total count of results available for a given query. In this case you can return a count which is greater than the number of results requested per page multiplied by the current page number. This will result in the WordPress media manager always showing a "Load more" button after loading each page of results.
 
 ## Local Media
 
