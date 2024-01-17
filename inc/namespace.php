@@ -275,6 +275,11 @@ function allow_local_media() : bool {
 	return apply_filters( 'amf/allow_local_media', $allow );
 }
 
+/**
+ * A replacement Admin AJAX handler for the media library attachments.
+ *
+ * @return void
+ */
 function ajax_query_attachments() : void {
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$args = isset( $_REQUEST['query'] ) ? wp_unslash( (array) $_REQUEST['query'] ) : [];
@@ -288,6 +293,19 @@ function ajax_query_attachments() : void {
 
 	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
 		wp_send_json_error();
+	}
+	
+	// If no provider is specified and WP attachment IDs are referenced,
+	// call the original AJAX handler, it's probably a gallery.
+	if (
+		empty( $args['provider'] ) &&
+		(
+			isset( $args['post__in'] ) ||
+			isset( $args['post__not_in'] ) ||
+			isset( $args['post_parent'] )
+		)
+	) {
+		wp_ajax_query_attachments();
 	}
 
 	try {
