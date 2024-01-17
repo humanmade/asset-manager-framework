@@ -78,14 +78,13 @@ There are two steps needed to integrate a media provider using the Asset Manager
 1. Create a provider which extends the `AssetManagerFramework\Provider` class and implements its `get_id()`, `get_name()` and `request()` methods to fetch results from your external media provider based on query arguments from the media manager.
 2. Hook into the `amf/register_providers` action to register your provider for use.
 
-Full documentation is coming soon, but for now here's an example of a provider which supplies images from placekitten.com:
+Here's an example of a provider which supplies images from placekitten.com:
 
 ```php
 use AssetManagerFramework\{
 	ProviderRegistry
 	Provider,
 	MediaList,
-	MediaResponse,
 	Image
 };
 
@@ -99,7 +98,7 @@ class KittenProvider extends Provider {
 		return __( 'Place Kitten' );
 	}
 
-	protected function request( array $args ) : MediaResponse {
+	protected function request( array $args ) : MediaList {
 		$kittens = [
 			500 => 'Boop',
 			600 => 'Fuzzy',
@@ -120,11 +119,10 @@ class KittenProvider extends Provider {
 			$items[] = $item;
 		}
 
-		return new MediaResponse(
-			new MediaList( ...$items ),
-			count( $kittens ), // Total number of available results.
-			count( $kittens )  // Number of items requested per page.
-		);
+		$list = new MediaList( ...$items ); // Result set for the current page.
+		$list->set_total( count( $items ) ); // Total number of available results.
+
+		return $list;
 	}
 
 }
@@ -138,7 +136,7 @@ Try it and your media library will be much improved:
 
 ![Kittens](assets/KittenProvider.png)
 
-The `MediaResponse` object takes a `MediaList` along with the total number of available items and the number of items requested per page. This is to ensure pagination in the media library (introduced in WordPress 5.8) works.
+The `MediaList` object takes a list of `Media` items (`Image`, `Audio`, `Video`, or `Document`). The total number of available results should be provided to the `set_total()` method to ensure pagination in the media library works.
 
 You also have access to provider instances during registration via the `amf/provider` filter, so you could use it to decorate providers:
 
@@ -153,6 +151,10 @@ add_filter( 'amf/provider', function ( Provider $provider ) {
 ```
 
 This is useful, for example, when you are using a third-party provider implementation and want to change certain behavior.
+
+## Total Result Count
+
+It may be that it's not practical for your media provider to provide a total count of results available for a given query. In this case you can return a count which is greater than the number of results requested per page multiplied by the current page number. This will result in the WordPress media manager always showing a "Load more" button after loading each page of results.
 
 ## Local Media
 
