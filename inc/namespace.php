@@ -340,7 +340,7 @@ function ajax_get_attachment() {
 		$provider = ProviderRegistry::instance()->get( wp_unslash( $_REQUEST['provider'] ?? '' ) );
 		if (
 			strpos( $_REQUEST['id'], 'amf-' ) === 0
-			&& in_array( __NAMESPACE__ . '\\Traits\\RequestOne', class_uses( $provider ), true )
+			&& method_exists( $provider, 'request_item' )
 		) {
 			$item = $provider->request_item( wp_unslash( $_REQUEST['id'] ) );
 			wp_send_json_success( $item );
