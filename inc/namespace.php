@@ -12,6 +12,9 @@ namespace AssetManagerFramework;
 use AssetManagerFramework\Interfaces\{
 	Resize
 };
+use AssetManagerFramework\Traits\{
+	RequestOne
+};
 use Exception;
 use WP_Http;
 use WP_Post;
@@ -26,6 +29,8 @@ function bootstrap() : void {
 	// Replace the default wp_ajax_query_attachments handler with our own.
 	remove_action( 'wp_ajax_query-attachments', 'wp_ajax_query_attachments', 1 );
 	add_action( 'wp_ajax_query-attachments', __NAMESPACE__ . '\\ajax_query_attachments', 1 );
+	remove_action( 'wp_ajax_get-attachment', 'wp_ajax_get_attachment', 1 );
+	add_action( 'wp_ajax_get-attachment', __NAMESPACE__ . '\\ajax_get_attachment', 1 );
 
 	// Handle the 'select' event Ajax call in the media manager.
 	add_action( 'wp_ajax_amf-select', __NAMESPACE__ . '\\ajax_select' );
@@ -294,7 +299,7 @@ function ajax_query_attachments() : void {
 	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
 		wp_send_json_error();
 	}
-	
+
 	// If no provider is specified and WP attachment IDs are referenced,
 	// call the original AJAX handler, it's probably a gallery.
 	if (
@@ -324,6 +329,35 @@ function ajax_query_attachments() : void {
 	}
 
 	wp_send_json_success( $items->toArray() );
+}
+
+function ajax_get_attachment() {
+	if ( ! isset( $_REQUEST['id'] ) ) {
+		wp_send_json_error();
+	}
+
+	try {
+		$provider = ProviderRegistry::instance()->get( wp_unslash( $_REQUEST['provider'] ?? '' ) );
+		if (
+			strpos( $_REQUEST['id'], 'amf-' ) === 0
+			&& method_exists( $provider, 'request_item' )
+		) {
+			$item = $provider->request_item( wp_unslash( $_REQUEST['id'] ) );
+			wp_send_json_success( $item );
+		}
+	} catch ( Exception $e ) {
+		wp_send_json_error(
+			[
+				[
+					'code' => $e->getCode(),
+					'message' => $e->getMessage(),
+				],
+			],
+			WP_Http::INTERNAL_SERVER_ERROR
+		);
+	}
+
+	wp_ajax_get_attachment();
 }
 
 function is_amf_asset( ?WP_Post $attachment ) : bool {
