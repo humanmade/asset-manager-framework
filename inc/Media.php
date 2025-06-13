@@ -48,6 +48,9 @@ class Media {
 	public $uploadedTo = 0;
 	public $url = '';
 	public $width = null;
+	public $type = '';
+	public $subtype = '';
+	public $provider = null;
 
 	public function __construct( string $id, string $mime ) {
 		$this->id = sprintf(
