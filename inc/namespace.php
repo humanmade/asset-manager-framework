@@ -239,7 +239,7 @@ function maybe_replace_attachment_url( $url, int $attachment_id ) : string {
  * @param string|null $fallback_url a fallback URL if it's not an AMF asset
  * @return string|null the source URL or null
  */
-function get_amf_source_url( int $attachment_id, string $fallback_url = null ) :? string {
+function get_amf_source_url( int $attachment_id, ?string $fallback_url = null ) :? string {
 	$attachment = get_post( $attachment_id );
 	if ( ! is_amf_asset( $attachment ) ) {
 		return $fallback_url;
@@ -294,7 +294,7 @@ function ajax_query_attachments() : void {
 	if ( $post_id && ! current_user_can( 'edit_post', $post_id ) ) {
 		wp_send_json_error();
 	}
-	
+
 	// If no provider is specified and WP attachment IDs are referenced,
 	// call the original AJAX handler, it's probably a gallery.
 	if (
