@@ -402,6 +402,10 @@ function fix_attachment_image_src( $image, $attachment_id ) {
 }
 
 function fix_intermediate_size_url( array $data, int $attachment_id ) : array {
+	if ( ! isset( $data['url'] ) ) {
+		return $data;
+	}
+
 	$attachment = get_post( $attachment_id );
 	$data['url'] = fix_media_url( $data['url'], $attachment );
 	return $data;
