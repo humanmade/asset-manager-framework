@@ -103,7 +103,7 @@ export function addProviderFilter() {
 	// about. A third filter is auto placed into an implicit third row and clipped by
 	// the fixed height toolbar. WP 6.9 and earlier still use the old float layout,
 	// where the opposite is true and the width override below is what makes three
-	// filters fit. See https://github.com/humanmade/product-dev/issues/2265
+	// filters fit.
 	if ( AMF_DATA.gridToolbar ) {
 		addInlineStyle( `
 			/* Let every filter claim its own column instead of overflowing to a third row. */
