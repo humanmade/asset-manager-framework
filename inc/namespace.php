@@ -93,6 +93,11 @@ function enqueue_scripts() : void {
 
 	$data = apply_filters( 'amf/script/data', [
 		'providers' => ProviderRegistry::instance()->get_script_data(),
+		// WP 7.0 replaced the media toolbar float layout with a fixed 2x2 CSS grid.
+		'gridToolbar' => version_compare( get_bloginfo( 'version' ), '7.0', '>=' ),
+		'l10n' => [
+			'providerFilterLabel' => __( 'Media library', 'asset-manager-framework' ),
+		],
 	] );
 
 	wp_add_inline_script(

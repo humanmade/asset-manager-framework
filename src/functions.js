@@ -98,23 +98,85 @@ export function addProviderFilter() {
 		return;
 	}
 
-	// Override core styles that allow only two filter inputs
-	addInlineStyle( `
-		.media-modal-content .media-frame select.attachment-filters { width: 150px }
-		.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 25px; }
-	` );
+	// WP 7.0 turned .media-toolbar-secondary into a fixed 2x2 grid (row 1 labels,
+	// row 2 selects) with hard coded grid-areas for the only two filters core knows
+	// about. A third filter is auto placed into an implicit third row and clipped by
+	// the fixed height toolbar. WP 6.9 and earlier still use the old float layout,
+	// where the opposite is true and the width override below is what makes three
+	// filters fit.
+	if ( AMF_DATA.gridToolbar ) {
+		addInlineStyle( `
+			/* Let every filter claim its own column instead of overflowing to a third row. */
+			.media-toolbar-secondary {
+				grid-template-columns: none;
+				grid-auto-flow: column;
+				grid-auto-columns: auto;
+			}
+
+			/*
+			 * Reset core's hard coded 2x2 placements so auto-flow controls the order.
+			 * The last two selectors are not redundant: core places the date filter with
+			 * "select#media-attachment-filters ~ select#media-attachment-date-filters",
+			 * which carries two IDs, so a single ID selector here would lose and the
+			 * date filter would stay pinned to column 2 whenever the type filter is hidden.
+			 */
+			.media-toolbar-secondary > label[for="media-attachment-filters"],
+			.media-toolbar-secondary > select#media-attachment-filters,
+			.media-toolbar-secondary > label[for="media-attachment-date-filters"],
+			.media-toolbar-secondary > select#media-attachment-date-filters,
+			.media-toolbar-secondary > label[for="media-attachment-provider-filter"],
+			.media-toolbar-secondary > select#media-attachment-provider-filter,
+			.media-toolbar-secondary > select#media-attachment-filters ~ label[for="media-attachment-date-filters"],
+			.media-toolbar-secondary > select#media-attachment-filters ~ select#media-attachment-date-filters {
+				grid-area: auto;
+			}
+
+			/* Shrink with the container rather than collide with the search field. */
+			.media-toolbar-secondary > select.attachment-filters {
+				min-width: 0;
+			}
+
+			/*
+			 * Any non-filter child (the dragInfo and suggestedDimensions instructions,
+			 * buttons) must span both rows, or it lands in the label row, stretches it
+			 * and pushes the selects back out of the toolbar.
+			 */
+			.media-toolbar-secondary > *:not(label):not(select) {
+				grid-row: 1 / -1;
+				align-self: center;
+			}
+
+			/*
+			 * Below 901px core stacks the toolbar and hard codes a height for exactly
+			 * two filters (7.1: 117px, 7.0: 74px). Let it size itself instead and feed
+			 * the matching content offset in from syncToolbarOffset().
+			 */
+			@media only screen and (max-width: 900px) {
+				.attachments-browser .media-toolbar {
+					height: auto;
+				}
+
+				.attachments-browser:not(.has-load-more) .attachments,
+				.attachments-browser.has-load-more .attachments-wrapper,
+				.attachments-browser .uploader-inline,
+				.media-frame-content .attachments-browser .attachments-wrapper {
+					top: var( --amf-toolbar-offset, 131px );
+				}
+			}
+		` );
+	} else {
+		// Override core styles that allow only two filter inputs
+		addInlineStyle( `
+			.media-modal-content .media-frame select.attachment-filters { width: 150px }
+			.media-modal-content .media-frame #media-attachment-provider-filter + .spinner { float: right; margin: -25px -0px 5px 25px; }
+		` );
+	}
 
 	// Create a new MediaLibraryProviderFilter we later will instantiate
 	var MediaLibraryProviderFilter = wp.media.view.AttachmentFilters.extend({
 		id: 'media-attachment-provider-filter',
 
 		createFilters: function() {
-			if ( this.options.controller._state === 'gallery-edit' ) {
-				this.$el.hide();
-			} else {
-				this.$el.show();
-			}
-
 			this.filters = providers.reduce( ( filters, { id, name } ) => {
 				filters[ id ] = {
 					text: name,
@@ -157,11 +219,34 @@ export function addProviderFilter() {
 		createToolbar: function() {
 			// Make sure to load the original toolbar
 			AttachmentsBrowser.prototype.createToolbar.call( this );
-			this.toolbar.set( 'MediaLibraryProviderFilter', new MediaLibraryProviderFilter({
-				controller: this.controller,
-				model:      this.collection.props,
-				priority: -75
-			}).render() );
+
+			// The provider filter is not offered while editing a gallery. Both the
+			// label and the select are skipped, so no orphaned label is left behind.
+			if ( this.controller._state !== 'gallery-edit' ) {
+				/*
+				 * The filter is a <select>, so a <label> needs to be rendered before it.
+				 * wp.media.view.Label defaults to screen-reader-text up to WP 6.9 and
+				 * drops that class in 7.0, so this matches whatever core does with its
+				 * own filter labels on the version in use.
+				 */
+				this.toolbar.set( 'MediaLibraryProviderFilterLabel', new wp.media.view.Label({
+					value: AMF_DATA.l10n?.providerFilterLabel || 'Media library',
+					attributes: {
+						'for': 'media-attachment-provider-filter'
+					},
+					priority: -75
+				}).render() );
+
+				this.toolbar.set( 'MediaLibraryProviderFilter', new MediaLibraryProviderFilter({
+					controller: this.controller,
+					model:      this.collection.props,
+					priority: -75
+				}).render() );
+			}
+
+			// The toolbar is not in the document yet and its height changes with the
+			// viewport and with which filters a provider supports, so track it.
+			observeToolbarHeight( this.toolbar.$el[0] );
 		}
 	});
 }
@@ -182,6 +267,42 @@ export function addInlineStyle( styles ) {
 export function toggleUI( supports ) {
 	jQuery( 'a[href*="media-new.php"],.uploader-inline .upload-ui,.uploader-inline .post-upload-ui' ).toggleClass( 'amf-hidden', ! supports.create );
 	jQuery( '.media-button.delete-selected-button' ).toggleClass( 'amf-hidden', ! supports.delete );
-	jQuery( '#media-attachment-date-filters' ).toggleClass( 'amf-hidden', ! supports.filterDate );
-	jQuery( '#media-attachment-filters' ).toggleClass( 'amf-hidden', ! supports.filterType );
+	jQuery( '#media-attachment-date-filters, label[for="media-attachment-date-filters"]' ).toggleClass( 'amf-hidden', ! supports.filterDate );
+	jQuery( '#media-attachment-filters, label[for="media-attachment-filters"]' ).toggleClass( 'amf-hidden', ! supports.filterType );
+}
+
+/**
+ * Track the toolbar height so the content below it can be offset to match.
+ *
+ * Only has an effect below 901px, where core stacks the filters and hard codes a
+ * toolbar height that assumes there are exactly two of them. A ResizeObserver
+ * covers every case that changes the height: first layout, viewport resizes, and
+ * filters being shown or hidden as the provider changes.
+ *
+ * @param {HTMLElement} toolbarEl
+ */
+export function observeToolbarHeight( toolbarEl ) {
+	if ( ! AMF_DATA.gridToolbar || ! toolbarEl || typeof ResizeObserver === 'undefined' ) {
+		return;
+	}
+
+	new ResizeObserver( () => syncToolbarOffset( toolbarEl ) ).observe( toolbarEl );
+}
+
+/**
+ * @param {HTMLElement} toolbarEl
+ */
+function syncToolbarOffset( toolbarEl ) {
+	// A detached or hidden toolbar measures 0. Ignore it so a closing modal does
+	// not clobber the offset of one that is still on screen.
+	if ( ! toolbarEl.offsetHeight ) {
+		return;
+	}
+
+	// Core keeps a constant 14px gap between the toolbar height and the top of the
+	// attachment list (7.1: 117 -> 131, 7.0: 74 -> 90).
+	document.documentElement.style.setProperty(
+		'--amf-toolbar-offset',
+		( toolbarEl.offsetHeight + 14 ) + 'px'
+	);
 }
