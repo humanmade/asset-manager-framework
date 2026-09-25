@@ -406,8 +406,8 @@ function fix_attachment_image_src( $image, $attachment_id ) {
 	return $image;
 }
 
-function fix_intermediate_size_url( array $data, int $attachment_id ) : array {
-	if ( ! isset( $data['url'] ) ) {
+function fix_intermediate_size_url( $data, int $attachment_id ) {
+	if ( ! is_array( $data ) || ! isset( $data['url'] ) ) {
 		return $data;
 	}
 
