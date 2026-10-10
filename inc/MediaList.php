@@ -13,6 +13,12 @@ use ArrayIterator;
 use IteratorAggregate;
 
 final class MediaList implements IteratorAggregate {
+	/**
+	 * Total available items.
+	 *
+	 * @var int
+	 */
+	private $total = 0;
 
 	private $items = [];
 
@@ -28,4 +34,11 @@ final class MediaList implements IteratorAggregate {
 		return new ArrayIterator( $this->items );
 	}
 
+	public function set_total( int $total ) : void {
+		$this->total = $total;
+	}
+
+	public function get_total() : int {
+		return $this->total;
+	}
 }

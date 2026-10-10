@@ -40,7 +40,7 @@ abstract class Provider {
 	 *     Arguments for the request for media items, typically coming directly from the media manager filters.
 	 *
 	 *     @type int      $paged          The page number of the results.
-	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40.
+	 *     @type int      $posts_per_page Optional. Maximum number of results to return. Usually 40 or 80.
 	 *     @type string   $s              Optional. The search query.
 	 *     @type string[] $post_mime_type Optional. Array of primary mime types or subtypes.
 	 *     @type string   $orderby        Optional. Order by. Typically it's safe to assume 'date', although 'menu_order ID' is possible.
@@ -50,10 +50,10 @@ abstract class Provider {
 	 *     @type int      $monthnum       Optional. One or two digit month number if results are filtered by date.
 	 * }
 	 * @throws Exception Thrown if an unrecoverable error occurs.
-	 * @return MediaResponse The response object containing pagination data and list of Media items.
-	 *                       Can be an empty collection if there are no matching results.
+	 * @return MediaList The response object containing pagination data and list of Media items.
+	 *                   Can be an empty collection if there are no matching results.
 	 */
-	abstract protected function request( array $args ) : MediaResponse;
+	abstract protected function request( array $args ) : MediaList;
 
 	public function supports_asset_create() : bool {
 		return false;
@@ -137,12 +137,7 @@ abstract class Provider {
 
 		$args['paged'] = intval( $args['paged'] ?? 1 );
 
-		$response = $this->request( $args );
-
-		// Send headers for media library pagination.
-		$this->send_pagination_headers( $response );
-
-		$items = $response->get_items();
+		$items = $this->request( $args );
 		$array = $items->toArray();
 
 		if ( ! $array ) {
@@ -228,19 +223,4 @@ abstract class Provider {
 
 		return $response['http_response'];
 	}
-
-	/**
-	 * Sends the pagination headers for the media response.
-	 *
-	 * @param MediaResponse $response The media response object.
-	 * @return void
-	 */
-	final protected function send_pagination_headers( MediaResponse $response ) {
-		if ( headers_sent() ) {
-			return;
-		}
-		header( sprintf( 'X-WP-Total: %d', $response->get_total() ) );
-		header( sprintf( 'X-WP-TotalPages: %d', $response->get_total_pages() ) );
-	}
-
 }
