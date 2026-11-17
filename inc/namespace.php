@@ -258,7 +258,20 @@ function get_amf_source_url( int $attachment_id, ?string $fallback_url = null ) 
 	return $fallback_url;
 }
 
+function get_local_attachment( string $id ) :? WP_Post {
+	// AMF IDs are prefixed `amf-`, so an all-digit ID is a local attachment ID, not a slug.
+	$attachment = ctype_digit( $id ) ? get_post( (int) $id ) : null;
+
+	return ( $attachment && 'attachment' === $attachment->post_type ) ? $attachment : null;
+}
+
 function get_attachment_by_id( string $id ) :? WP_Post {
+	$local = get_local_attachment( $id );
+
+	if ( $local ) {
+		return $local;
+	}
+
 	$query = new WP_Query(
 		[
 			'post_type' => 'attachment',
